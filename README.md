@@ -10,6 +10,8 @@ Lojë 3D në shfletues (WebGL 2) për Gjergj Kastriotin Skënderbeun. Gjithçka 
 
 **Mbrojtja pa fund**: valë pas vale për rekord. **Galeria**: luftëtarët nga afër. **Cilësimet**: grafika, zëri, kamera, dridhjet, këshillat.
 
+**Mbështet lojën**: loja është falas. Kush dëshiron mund të dhurojë përmes PayPal, nga butoni në faqen kryesore të lojës.
+
 Kontrollet: W A S D për kalin, klik ose Space për të goditur (mbaje për goditje të rëndë), C ose klik i djathtë për mbrojtje (ngrije në çast për ta zmbrapsur goditjen), Q për shtizë, Shift për vrull, F për ta ngritur kalin, R për kushtrimin. Në celular ka levë dhe butona.
 
 ---

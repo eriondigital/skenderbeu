@@ -134,6 +134,27 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
 .tog::after{content:"";position:absolute;left:4px;top:4px;width:16px;height:16px;border-radius:50%;background:rgba(244,239,229,.75);transition:transform .15s}
 .tog[aria-checked="true"]{background:var(--ari)} .tog[aria-checked="true"]::after{transform:translateX(22px);background:#3b0b08}
 
+/* support the game: gold coins that open PayPal with the amount filled in */
+.give{display:flex;align-items:center;gap:9px;width:max-content;margin:16px auto 0;padding:6px 2px;font-size:15.5px;font-weight:700;color:#ffe2a0;border-bottom:1px solid rgba(224,176,79,.45)}
+.give:hover,.give:focus-visible{color:#fff3cf;border-color:var(--ari);outline:none}
+#end .give{margin:20px 0 0}
+.coin-ic{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;font-size:12.5px;font-weight:800;color:#5a3a0e;
+  background:radial-gradient(circle at 35% 30%,#ffe9ae,#e0b04f 60%,#a8792b);box-shadow:inset 0 0 0 1.5px rgba(90,58,14,.55)}
+#donate .flag{width:min(450px,100%)}
+.coins{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
+.coin{display:flex;flex-direction:column;align-items:center;justify-content:center;width:70px;height:70px;border-radius:50%;text-decoration:none;color:#4a2c08;
+  background:radial-gradient(circle at 34% 28%,#fff1c4,#ebc065 42%,#bd8b35 78%,#8a6021);
+  box-shadow:inset 0 0 0 3px rgba(122,82,22,.6),inset 0 0 0 6px rgba(255,236,170,.32),0 7px 16px rgba(40,4,2,.38);transition:transform .15s,filter .15s}
+.coin b{font-family:var(--f-d);font-weight:700;font-size:28px;line-height:.9;font-variant-numeric:lining-nums}
+.coin i{font-style:normal;font-size:12.5px;font-weight:800}
+.coin:hover{transform:translateY(-3px) rotate(-4deg);filter:brightness(1.07)}
+.coin:focus-visible{outline:2px solid #fff3cf;outline-offset:3px}
+a.pri{display:inline-block;text-decoration:none}
+.payto{margin:22px 0 0;line-height:1.6}
+.mail{color:var(--liri);font-weight:700;user-select:all;-webkit-user-select:all;overflow-wrap:anywhere}
+.payto .sec{margin-left:6px;padding:2px 2px;font-size:14px}
+#donNote{margin:6px 0 0}
+
 /* gifts between waves: three small hanging banners */
 #upgrade{display:grid;place-items:center;align-content:center;gap:16px;background:radial-gradient(ellipse at 50% 40%,rgba(12,6,5,.25),rgba(12,6,5,.7))}
 .upHead{text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.7)}
@@ -283,6 +304,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
 
 /* layout adaptations */
 @media (max-width:640px){
+  .coins{gap:10px} .coin{width:62px;height:62px} .coin b{font-size:25px}
   .hang{padding-left:calc(14px + var(--sa-l));padding-right:calc(14px + var(--sa-r))}
   .flag{width:100%!important}
   .cloth{padding:26px 22px 70px}
@@ -311,7 +333,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
   #hint{bottom:auto;top:calc(64px + var(--sa-t));font-size:14px;max-width:44vw}
 }
 @media (prefers-reduced-motion:reduce){
-  .screen:not([hidden]) .flag,.bigstars svg,#objList li.fresh,#hint{animation:none}
+  .screen:not([hidden]) .flag,.bigstars svg,#objList li.fresh,#hint{animation:none} .coin{transition:none}
   #banner.on{animation-timing-function:steps(2)} .bar i{transition:none}
 }
 </style>
@@ -362,6 +384,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
         <button id="mGallery"><span class="mi" data-i18n="gallery"></span><span class="md" data-i18n="mGalleryD"></span></button>
         <button id="mSettings"><span class="mi" data-i18n="settings"></span><span class="md" data-i18n="mSettingsD"></span></button>
       </nav>
+      <button class="give" id="mDonate"><span class="coin-ic" aria-hidden="true">€</span><span data-i18n="donate">Mbështet lojën</span></button>
       <p class="status" id="loading" data-i18n="loading" hidden></p>
       <p class="status err" id="glErr" hidden></p>
       <p class="record num" id="record"></p>
@@ -433,6 +456,19 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
       <dl class="tally num" id="endTally"></dl>
       <p class="quote" id="endQuote"></p>
       <div class="acts" id="endActs"></div>
+      <button class="give" id="endDonate" hidden><span class="coin-ic" aria-hidden="true">€</span><span data-i18n="donateEnd">Të pëlqeu? Mbështet lojën</span></button>
+    </div></div>
+  </section>
+
+  <section id="donate" class="screen hang dim" hidden>
+    <div class="flag"><div class="cloth">
+      <h2 data-i18n="donate">Mbështet lojën</h2>
+      <p class="chron" data-i18n="donateText"></p>
+      <div class="coins" id="coins"></div>
+      <div class="acts"><a class="pri" id="donAny" target="_blank" rel="noopener" data-i18n="donateAny">Zgjidh vetë shumën</a></div>
+      <p class="payto small"><span data-i18n="donateTo">Dhurata shkon në PayPal te</span> <b class="mail" id="payMail"></b> <button class="sec" id="donCopy" data-i18n="donateCopy">Kopjo</button></p>
+      <p class="small" id="donNote" data-i18n="donateTab">PayPal hapet në një skedë të re.</p>
+      <div class="acts"><button class="sec" id="donBack" data-i18n="back">Kthehu</button></div>
     </div></div>
   </section>
 
@@ -4789,6 +4825,10 @@ const SQ = {
   mEndless: 'Mbrojtja pa fund', mEndlessD: 'Valë pas vale para portës së Krujës',
   gallery: 'Galeria', mGalleryD: 'Luftëtarët nga afër', settings: 'Cilësimet', mSettingsD: 'Grafika, zëri dhe kamera',
   record: 'Rekordi në mbrojtje: vala {0}, {1} pikë', mapSum: 'Ke fituar {0} nga {1} yje. Çdo betejë jep deri në tre.',
+  donate: 'Mbështet lojën', donateEnd: 'Të pëlqeu? Mbështet lojën', donateAny: 'Zgjidh vetë shumën', donateTo: 'Dhurata shkon në PayPal te',
+  donateText: 'Skënderbeu është falas dhe pa reklama. Nëse të pëlqen, mund ta mbështetësh me një dhuratë përmes PayPal. Çdo shumë, e madhe apo e vogël, ndihmon.',
+  donateCopy: 'Kopjo', donateCopied: 'U kopjua', donateSel: 'Adresa u zgjodh', donateTab: 'PayPal hapet në një skedë të re.',
+  donateThanks: 'Faleminderit! Përfundoje dhuratën në faqen e PayPal.', donateAmt: 'Dhuro {0} euro përmes PayPal', donateItem: 'Mbështetje për lojën Skënderbeu',
   back: 'Kthehu', campaignBack: 'Fushata', toBattle: 'Në betejë', done: 'Gati', objectives: 'Detyrat', starsH: 'Yjet',
   M: {
     torvioll: { name: 'Beteja e Torviollit', place: 'Lugina e Torviollit, 29 qershor 1444',
@@ -5024,7 +5064,7 @@ window.addEventListener('keyup', e => { KEYS.delete(e.code); });
 window.addEventListener('blur', () => { KEYS.clear(); resetInput(); });
 function moveFocus(d, e) {
   const scr = SCREENS.map($).find(s => !s.hidden); if (!scr) return;
-  const list = [...scr.querySelectorAll('button:not([disabled]),input')].filter(b => b.offsetParent !== null);
+  const list = [...scr.querySelectorAll('button:not([disabled]),input,a[href]')].filter(b => b.offsetParent !== null);
   if (!list.length) return; e.preventDefault();
   const i = list.indexOf(document.activeElement); list[(i + d + list.length) % list.length].focus();
 }
@@ -5302,10 +5342,10 @@ function updateHints(dt) {
 }
 
 /* ---- screens ---- */
-const SCREENS = ['title', 'map', 'brief', 'settings', 'pause', 'upgrade', 'end', 'gallery'];
+const SCREENS = ['title', 'map', 'brief', 'settings', 'pause', 'upgrade', 'end', 'gallery', 'donate'];
 function showScreen(id, focusSel) {
   for (const s of SCREENS) $(s).hidden = s !== id;
-  UI.hud.classList.toggle('dim', id === 'upgrade' || id === 'pause' || id === 'settings' || id === 'end'); UI.hud.classList.toggle('dim2', id === 'pause' || id === 'settings' || id === 'end');
+  UI.hud.classList.toggle('dim', id === 'upgrade' || id === 'pause' || id === 'settings' || id === 'end' || id === 'donate'); UI.hud.classList.toggle('dim2', id === 'pause' || id === 'settings' || id === 'end' || id === 'donate');
   for (const n of NUMS) { n.life = 0; n.el.hidden = true; }
   resetInput(); $('hint').hidden = true;
   requestAnimationFrame(() => { fitFlags(); if (!touchMode) { const f = $(id).querySelector(focusSel || 'button:not([disabled])'); if (f) f.focus({ preventScroll: true }); } });
@@ -5374,7 +5414,7 @@ $('brGo').addEventListener('click', () => startGame(MS.sel));
 function toTitleMenu() { UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD); showScreen('title'); applyI18n(); }
 function backKey() {
   if (G.state === 'gallery') return;
-  if (!$('brief').hidden) $('brBack').click(); else if (!$('map').hidden) toTitleMenu(); else if (!$('settings').hidden) closeSettings();
+  if (!$('brief').hidden) $('brBack').click(); else if (!$('map').hidden) toTitleMenu(); else if (!$('settings').hidden) closeSettings(); else if (!$('donate').hidden) closeDonate();
 }
 /* settings */
 function openSettings(from) {
@@ -5398,6 +5438,30 @@ for (const [id, k] of [['tMusic', 'music'], ['tVib', 'vib'], ['tHints', 'hints']
   SET[k] = !SET[k]; saveSet(); $(id).setAttribute('aria-checked', String(SET[k])); if (k === 'music') { AU.init(); AU.setMusic(SET[k]); }
 });
 $('bReset').addEventListener('click', () => { const b = $('bReset'); if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = t('sReset2'); } else { store.set('prog', {}); store.set('endless', null); b.textContent = t('sResetDone'); b.dataset.arm = ''; } });
+/* support the game: each coin opens PayPal's donation page with the amount filled in */
+const PAYPAL = 'erionpay@gmail.com';
+const payURL = amt => 'https://www.paypal.com/donate/?' + new URLSearchParams(Object.assign({ business: PAYPAL, currency_code: 'EUR', no_recurring: '0', item_name: t('donateItem') }, amt ? { amount: amt.toFixed(2) } : {})).toString();
+function buildDonate() {
+  const box = $('coins'); box.textContent = '';
+  for (const a of [2, 5, 10, 20]) {
+    const el = document.createElement('a'); el.className = 'coin'; el.href = payURL(a); el.target = '_blank'; el.rel = 'noopener';
+    el.setAttribute('aria-label', t('donateAmt', a)); el.innerHTML = `<b>${a}</b><i>€</i>`; box.appendChild(el);
+  }
+  $('donAny').href = payURL(0); $('payMail').textContent = PAYPAL;
+}
+function openDonate(from) {
+  UI.donFrom = from; buildDonate(); $('donCopy').textContent = t('donateCopy'); $('donNote').textContent = t('donateTab');
+  showScreen('donate', '.coin');
+}
+function closeDonate() { if (UI.donFrom === 'end' && G.state === 'over') showScreen('end'); else { showScreen('title'); applyI18n(); } }
+$('mDonate').addEventListener('click', () => openDonate('title'));
+$('endDonate').addEventListener('click', () => openDonate('end'));
+$('donBack').addEventListener('click', closeDonate);
+$('donate').addEventListener('click', e => { if (e.target.closest('a[href^="https://www.paypal.com"]')) $('donNote').textContent = t('donateThanks'); });
+$('donCopy').addEventListener('click', () => {
+  const b = $('donCopy'), pick = () => { try { const r = document.createRange(); r.selectNodeContents($('payMail')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) { } b.textContent = t('donateSel'); };
+  try { navigator.clipboard.writeText(PAYPAL).then(() => { b.textContent = t('donateCopied'); }, pick); } catch (e) { pick(); }
+});
 /* gifts between waves */
 function showUpgrades(list) {
   const box = $('ups'); box.textContent = '';
@@ -5445,6 +5509,7 @@ function endGame(win, reason) {
   btn('retry', win && idx >= 0 && idx < MISSIONS.length - 1 ? 'sec' : 'pri', () => startGame(m));
   if (m && !m.endless) btn('toMap', 'sec', () => fadeSwap(() => { leaveBattle(); openMap(); }));
   btn('toTitle', 'sec', toTitle);
+  $('endDonate').hidden = !(win || (m && m.endless));
   setTimeout(() => { if (G.state === 'over') showScreen('end'); }, win ? 900 : 700);
 }
 function togglePause() {
