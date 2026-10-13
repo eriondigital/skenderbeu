@@ -5860,10 +5860,17 @@ function updateCam(dt) {
   const fg = CAM.fight;
   const fx = Math.sin(yaw), fz = Math.cos(yaw);
   const ok = CAM.outro;
-  const dist = (near ? (portrait ? 7.4 : 6.0) + sp01 * 0.7 + fg * 1.6 : (portrait ? 13 : 10.5) + sp01 * 0.8) + ok * (near ? 3.2 : 2);
-  const pitch = (near ? (portrait ? 0.3 : 0.21) + fg * 0.05 : portrait ? 0.33 : 0.25) + ok * 0.14;
-  const look = near ? (portrait ? 0.6 : 0.8) + sp01 * 1.6 : 3.5 + sp01 * 1.5;
-  const tx = PL.x + fx * look, ty = PL.y + (near ? (portrait ? 2.6 : 2.7) : 2.4), tz = PL.z + fz * look;
+  let dist, pitch, look, tyOff;
+  if (near) {
+    // framed like a third-person action game: the eye a little above the rider's helmet, the whole horse in view,
+    // his head about two fifths down the screen; looking ahead moves the aim, not the hero's distance from the lens
+    const D = (portrait ? 6.5 : 5.6) + sp01 * 0.6 + fg * 1.5 + ok * 3.2, hh = (portrait ? 4.8 : 3.3) + fg * 0.5 + ok * 1.5;
+    pitch = (portrait ? 0.3 : 0.19) + fg * 0.05 + ok * 0.14; look = (portrait ? 0.6 : 0.8) + sp01 * 1.6;
+    dist = (D + look) / Math.cos(pitch); tyOff = hh - Math.sin(pitch) * dist;
+  } else {
+    dist = (portrait ? 13 : 10.5) + sp01 * 0.8 + ok * 2; pitch = (portrait ? 0.33 : 0.25) + ok * 0.14; look = 3.5 + sp01 * 1.5; tyOff = 2.4;
+  }
+  const tx = PL.x + fx * look, ty = PL.y + tyOff, tz = PL.z + fz * look;
   if (near) CAM.fovT = ((portrait ? 70 : 62) + sp01 * 6 + (PL.chargeT > 0 ? 5 : 0) + fg * 3) * PI / 180;
   CAM.fovS = damp(CAM.fovS == null ? CAM.fov : CAM.fovS, CAM.fovT, 4, dt);
   CAM.punch = Math.max(0, (CAM.punch || 0) - dt * 3.2);
