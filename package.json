@@ -1,0 +1,23 @@
+{
+  "name": "primary",
+  "version": "1.0.0",
+  "description": "Lojë 3D në shfletues (WebGL 2) për Gjergj Kastriotin Skënderbeun. Gjithçka është në një skedar të vetëm, `index.html`, dhe funksionon në kompjuter dhe në celular.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eriondigital/skenderbeu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eriondigital/skenderbeu/issues"
+  },
+  "homepage": "https://github.com/eriondigital/skenderbeu#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
