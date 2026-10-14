@@ -2,11 +2,18 @@
 
 Lojë 3D në shfletues (WebGL 2) për Gjergj Kastriotin Skënderbeun. Gjithçka është në një skedar të vetëm, `index.html`, dhe funksionon në kompjuter dhe në celular.
 
-**Fushata**, katër beteja me nga tre yje secila:
+**Fushata**, shtatë beteja me nga tre yje secila:
+- Flamuri mbi Krujë, 1443: në muzg, nën shi, thyej garnizonin osman para portës, mbaje portën dhe ngrije flamurin e Kastriotëve.
 - Beteja e Torviollit, 1444: përballo pararojën, pastaj malësorët dalin nga pyjet dhe ti mund Ali Pashën.
 - Rrethimi i Krujës, 1450: mbaj portën gjatë dhjetë valëve dhe zgjidh dhurata mes tyre.
 - Zjarr në kampin osman, 1450: natën, me pishtar në dorë, digj makinat e rrethimit dhe kthehu në Krujë.
+- Beteja e Albulenës, 1457: në mjegullën e mëngjesit bjeri kampit, zëre rob Hamza Kastriotin dhe përzë Isak Beun.
 - Dueli me Ballaban Pashën, 1465: luftë një me një para dy ushtrive.
+- Rrethimi i dytë i Krujës, 1466: në stuhi, dil nga porta dhe hidhi në erë topat e Sulltanit, pastaj thyej sulmin e fundit.
+
+**Moti**: shi, stuhi me vetëtima dhe bubullima, mjegull mëngjesi. Toka laget dhe shkëlqen, rruga mbush pellgje, kuajt ngrenë baltë në vend të pluhurit.
+
+**Armiq të rinj**: akinxhinjtë, kalorës me hark që qarkojnë dhe qëllojnë nga larg; topat e Sulltanit, që hedhin gjyle mbi muret dhe mbi fushë (vendi ku bie gjyleja shënohet me të kuqe); Isak Beu, që ikën kur ushtria e tij thyhet; dhe Hamza Kastrioti, që dorëzohet.
 
 Kamera qëndron afër, pas shpinës së Skënderbeut, dhe largohet pak kur beteja të rrethon. Mes valëve zgjedh dhurata: secila tregon me numra çfarë ndryshon, dhe ato që ke marrë duken nën shëndetin tënd.
 
@@ -14,9 +21,9 @@ Kamera qëndron afër, pas shpinës së Skënderbeut, dhe largohet pak kur betej
 
 **Përparimi**: çdo betejë jep dukatë dhe përvojë, dhe ngjitesh nga Djalosh deri në Legjendë (niveli 50). Gjithçka ruhet në shfletues.
 - **Armatimi**: forco shpatën, parzmoren, kalin, shtizat dhe kushtrimin, nga pesë nivele secila. Te Pamja zgjedh ngjyrën e kalit dhe të flamurit, dhe e sheh menjëherë te Skënderbeu.
-- **Sfida e ditës**: çdo ditë Kruja me dy rregulla të reja (kalorësi, shi shigjetash, elita e Sulltanit e të tjera). Mbaj pesë valë për shpërblimin; ditët radhazi japin më shumë.
+- **Sfida e ditës**: çdo ditë Kruja me dy rregulla të reja (kalorësi, shi shigjetash, akinxhinj, topa, elita e Sulltanit e të tjera); moti ndryshon nga dita në ditë. Mbaj pesë valë për shpërblimin; ditët radhazi japin më shumë.
 - **Urdhrat e ditës**: tri detyra të vogla çdo ditë, dukatë për secilën dhe një shpërblim kur i kryen të trija.
-- **Medaljet**: 26 medalje, nga gjaku i parë deri te të gjitha yjet e fushatës.
+- **Medaljet**: 29 medalje, nga gjaku i parë deri te të gjitha yjet e fushatës.
 - Luftëtarë të elitës me rreth të artë, thirrje për vargjet e rrëzimeve, dhe në fund të betejës gjithçka që fitove, me një foto për ta ndarë.
 
 **Mbrojtja pa fund**: valë pas vale për rekord. **Galeria**: luftëtarët nga afër. **Cilësimet**: grafika, pamja (afër ose larg), zëri, ndjeshmëria e kamerës, dridhjet, këshillat.
@@ -27,4 +34,4 @@ Kontrollet: W A S D për kalin, klik ose Space për të goditur (mbaje për godi
 
 ---
 
-A 3D browser game (WebGL 2) about Skanderbeg, in Albanian. One self-contained `index.html`: a four-battle campaign with three stars per battle, an endless defence mode, a gallery and settings, for desktop and phone. The camera rides close behind the hero (a far view is in the settings), and the gifts between waves show exactly what they change. Progression between battles: gold and experience from every fight, 50 levels with titles, an armory of permanent upgrades, horse coats and banner colours previewed live on the hero, 26 medals, a daily challenge with two rules of the day and a day streak, three daily orders, elite enemies, kill-streak calls, an animated results screen and a shareable result picture, all saved in the browser. Rendering: physically based lighting with sky reflections, volumetric haze and sun shafts, shader-driven fire, a river that mirrors its banks and fires, temporal anti-aliasing, eye adaptation and a filmic grade for each time of day.
+A 3D browser game (WebGL 2) about Skanderbeg, in Albanian. One self-contained `index.html`: a seven-battle campaign from 1443 to 1466 with three stars per battle (the flag raised over Krujë, Torvioll, the two sieges of Krujë, the night raid, Albulena, the duel with Ballaban), an endless defence mode, a gallery and settings, for desktop and phone. The camera rides close behind the hero (a far view is in the settings), and the gifts between waves show exactly what they change. Progression between battles: gold and experience from every fight, 50 levels with titles, an armory of permanent upgrades, horse coats and banner colours previewed live on the hero, 29 medals, a daily challenge with two rules of the day and a day streak, three daily orders, elite enemies, kill-streak calls, an animated results screen and a shareable result picture, all saved in the browser. Weather: rain, thunderstorms with lightning and thunder, morning mist, wet ground with puddles and mud. Enemies include horse archers who circle and shoot, the Sultan's bombards lobbing stone balls at the walls and the field, a commander who flees and one who surrenders. Rendering: physically based lighting with sky reflections, volumetric haze and sun shafts, shader-driven fire, a river that mirrors its banks and fires, temporal anti-aliasing, eye adaptation and a filmic grade for each time of day.

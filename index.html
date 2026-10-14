@@ -591,6 +591,11 @@ a.pri{display:inline-block;text-decoration:none}
   .perks{gap:6px 7px} .perk{width:22px;height:22px} .perk svg{width:13px;height:13px} .perk b{right:-6px}
   #streak b{font-size:42px}
 }
+/* seven battles in the campaign: on a laptop-height screen the rows close up so the list and its back button fit */
+@media (max-height:820px) and (min-width:641px){
+  .missions button{padding:8px 6px 9px} .missions .mn{font-size:23px} .missions .yr{font-size:21px} .missions .pl{font-size:13px}
+}
+@media (max-height:620px) and (min-width:641px){ .missions .pl{display:none} .missions button{padding:7px 6px 8px} }
 @media (max-height:520px){
   .hang{padding-top:calc(8px + var(--sa-t))}
   .cloth{padding:18px 24px 56px;--notch:34px}
@@ -1271,12 +1276,14 @@ vec2 skyUV(vec3 d){
 vec3 skyL(vec3 d){ return texture(uSkyLUT, skyUV(d)).rgb * uSkyT; }`;
 /* aerial perspective: distance and height fog that takes the colour of the horizon sky in the view direction */
 const FOG_GLSL = SKYLUT_GLSL + `
+uniform float uOvc; uniform vec3 uOvcC; // overcast: the fog takes the colour of the low cloud deck
 vec3 applyFog(vec3 col, vec3 W){
   vec3 d = W - uCam; float dist = length(d); vec3 dir = d / max(dist, 1e-3);
   float ap = 1. - exp(-max(dist - uFog.x * .5, 0.) * uFog.y * .75);
   float gf = (1. - exp(-max(dist - uFog.x, 0.) * uFog.y * 1.6)) * exp(-max(W.y, 0.) * uFog.z);
   float a = min(max(ap, gf), uFog.w);
   vec3 fc = skyL(normalize(vec3(dir.x, max(dir.y, 0.) * .3 + .025, dir.z))) * uFogC;
+  fc = mix(fc, uOvcC, uOvc);
   return mix(col, fc, a);
 }`;
 
@@ -1370,11 +1377,12 @@ in vec3 vW; in vec3 vN; in vec4 vC; flat in vec2 vM; in vec2 vT; in vec4 vSP; in
 uniform float uTW;
 uniform vec3 uCam, uSun, uSunC, uSky, uGnd, uFillD, uFillC, uFogC, uHorC, uTint, uEmis; uniform vec4 uFog;
 uniform sampler2DShadow uShadow, uShadow2; uniform float uSTex, uSTex2; uniform sampler2D uTex;
-uniform float uUseTex, uTwo, uA, uOut, uTime; uniform vec4 uPL[4]; uniform vec4 uPLC[4]; uniform int uNPL;
+uniform float uUseTex, uTwo, uA, uOut, uTime; uniform vec4 uPL[4]; uniform vec4 uPLC[4]; uniform int uNPL; uniform vec4 uWave;
 uniform sampler2DArray uGA, uGN, uWA, uWN;
 uniform samplerCube uEnvMap; uniform float uEnvK, uEnvLod, uFade;
 uniform vec3 uVar; // per figure: pattern seed, mud amount, height of the ground in the bind pose
 uniform vec4 uBan, uCoat, uHair; // the hero's chosen colours: banner cloth (rgb, on), horse coat (rgb, dapple), mane (rgb, leg shading; 0 = off)
+uniform float uWet; // rain: how soaked the world is
 uniform vec2 uDith;
 out vec4 o;
 ${GLSL_NOISE}
@@ -1606,6 +1614,15 @@ void main(){
     base *= 1. - rut * .3 - hoof * .2; ao *= 1. - hoof * .3; rough = mix(rough, .5, max(rut, hoof) * .7); specK = mix(specK, .7, rut);
     float wet = bl.z * smoothstep(.42, .2, d0.a) * smoothstep(.62, .82, fbm3(q * .19 + 5.));
     base *= 1. - wet * .3; rough = mix(rough, .42, wet); specK = mix(specK, 1., wet);
+    // rain: the soil soaks, water stands in the ruts and hollows, and every drop rings the puddles
+    if (uWet > 0.) {
+      float pud = clamp(max(wet * 1.8, rut * .95) + smoothstep(.58, .76, fbm3(q * .13 + 9.)) * (bl.z + bl.y * .6 + bf * .3), 0., 1.) * smoothstep(.93, .99, Ng.y) * uWet;
+      vec2 rq = q * 2.6, ri = floor(rq), rf = fract(rq) - .5; float rh = h21(ri + 3.3), rp = fract(uTime * 1.6 + rh);
+      vec2 rc = rf - (vec2(h21(ri + 8.1), h21(ri + 1.7)) - .5) * .5; float rr = length(rc);
+      float ring = sin((rr - rp * .4) * 70.) * smoothstep(.05, 0., abs(rr - rp * .4)) * (1. - rp) * (1. - rp) * step(.45, rh);
+      N = normalize(mix(N, Ng, pud * .92) + vec3(rc.x, 0., rc.y) / max(rr, .01) * ring * .16 * pud);
+      base *= mix(1. - .32 * uWet, .4, pud); rough = mix(rough * mix(1., .55, uWet), .025, pud); specK = mix(specK, 1., max(pud, uWet * .55)); ao = mix(ao, 1., pud * .6);
+    }
   }
   else if (kind == 7.) { emis += base * 5.; }
   else if (kind == 8.) {
@@ -1693,6 +1710,9 @@ void main(){
     base = mix(base, base * .55 + vec3(.32, .2, .06), clamp(mot, 0., 1.) * .6 * (1. - lw)); rough = .42 - mot * .12; sheen = .5;
   }
   if (uUseTex > .5) base *= lin(texture(uTex, vT).rgb) * 1.25; // canvas-painted textures are sRGB
+  // a painted flag in the wind is matte, and with the sun beyond it the light comes through the red while the eagle stays black
+  bool thru = uUseTex > .5 && uTwo > .5 && uWave.x > 0.;
+  if (thru) { specK *= .35; rimK *= .4; }
 #ifdef SKIN
   if (kind != 2. && kind != 16. && kind != 10.) {
     // splashed mud low down, a film of road dust above it; dried mud is matte
@@ -1701,6 +1721,11 @@ void main(){
     rough = mix(rough, .96, mud * .8); metal *= 1. - mud * .9; sheen *= 1. - mud;
   }
 #endif
+  // rain soaks everything else: darker and glossier, cloth and wood the most, steel and gilt the least
+  if (uWet > 0. && kind != 6. && kind != 7.) {
+    float por = (kind == 1. || kind == 12. || kind == 13. || kind == 16.) ? .2 : 1., up = .55 + .45 * clamp(Ng.y, 0., 1.);
+    base *= 1. - .36 * uWet * por; rough = mix(rough, rough * .45 + .05, uWet * up * (por > .5 ? .8 : 1.)); sheen *= 1. - .5 * uWet;
+  }
   // ---- light ----
   float NdL = dot(N, uSun), sh = NdL > -.62 ? shadowF() * smoothstep(-.62, -.42, NdL) : 0.;
   sh *= 1. - smoothstep(.45, .74, fbm3(W.xz * .011 + vec2(uTime * .02, uTime * .008))) * .55;
@@ -1743,6 +1768,7 @@ void main(){
   if (sheen > 0.) { float fe = pow(1. - NoV, 4.); col += mix(base, vec3(dot(base, vec3(.33))), .3) * sheen * fe * (amb * 1.2 + uSunC * sh * (NoL * .6 + .2)); }
   float rim = pow(1. - NoV, 3.5) * pow(max(dot(-V, uSun) * .5 + .5, 0.), 2.);
   col += uSunC * base * rim * rimK * (.35 + .65 * sh) * ao;
+  if (thru && NdL < 0.) col += base * uSunC * (-NdL) * shadowF() * .45;
   for (int i = 0; i < 4; i++) {
     if (i >= uNPL) break;
     vec3 Lp = uPL[i].xyz - W; float d = length(Lp), at = clamp(1. - d / uPL[i].w, 0., 1.); Lp /= d;
@@ -1779,7 +1805,7 @@ const SKY_VS = `#version 300 es
 layout(location=0) in vec2 aP; out vec2 vP; void main(){ vP = aP; gl_Position = vec4(aP, .99999, 1.); }`;
 const SKY_FS = `#version 300 es
 precision highp float;
-in vec2 vP; uniform vec3 uF, uR, uU, uSun, uSunC, uSky; uniform vec2 uK, uCloudOff; uniform float uTime, uOut, uCover, uNight, uDisk, uDiskK;
+in vec2 vP; uniform vec3 uF, uR, uU, uSun, uSunC, uSky, uOvcC; uniform vec2 uK, uCloudOff; uniform float uTime, uOut, uCover, uNight, uDisk, uDiskK, uOvc, uFlash;
 uniform sampler2D uNoise;
 out vec4 o;
 ${SKYLUT_GLSL}
@@ -1826,6 +1852,14 @@ void main(){
     float ci = smoothstep(.55, .85, texture(uNoise, vec2(q.x * .6, q.y * 2.2)).a) * smoothstep(.45, .8, texture(uNoise, q * .3).g) * smoothstep(.02, .3, d.y);
     c = mix(c, uSunC * (hg(mu, .5) * 3. + .4) + uSky * 1.2, ci * .28);
   }
+  // a low grey deck: the colour drains from the dome toward the horizon; lightning lights the deck from inside
+  if (uOvc > 0.) {
+    // the same grey the fog takes, so hills fading into the rain meet the sky without a seam; darker billows overhead
+    vec2 sp = d.xz / (abs(d.y) + .06) * .3 + uCloudOff * 1.7;
+    vec3 deck = uOvcC * (1. + .18 * smoothstep(0., .5, d.y)) * (1. - .28 * smoothstep(.35, .8, texture(uNoise, sp).r) * smoothstep(.05, .3, d.y));
+    c = mix(c, deck, uOvc);
+  }
+  if (uFlash > 0.) c += vec3(.62, .7, .95) * uFlash * (1.4 + 2.2 * texture(uNoise, d.xz / (abs(d.y) + .1) * .25 + uTime * .01).g) * smoothstep(-.1, .2, d.y);
   o = vec4(c * uOut, 0.);
 }`;
 
@@ -1867,7 +1901,7 @@ void main(){
 const GR_FS = `#version 300 es
 precision highp float;
 in vec3 vC; in float vT; in float vSh; in vec3 vW; in vec3 vN; flat in float vType;
-uniform vec3 uCam, uSun, uSunC, uSky, uGnd, uFogC; uniform vec4 uFog; uniform float uOut; out vec4 o;
+uniform vec3 uCam, uSun, uSunC, uSky, uGnd, uFogC; uniform vec4 uFog; uniform float uOut, uWet; out vec4 o;
 ${FOG_GLSL}
 ${PBR_GLSL}
 void main(){
@@ -1880,7 +1914,9 @@ void main(){
   float tr = pow(max(dot(-V, uSun), 0.), 4.) * vT;
   vec3 amb = ambIrr(normalize(N + vec3(0., .6, 0.))) * ao;
   float sp = pow(max(dot(N, normalize(uSun + V)), 0.), 20.) * .1 * vT;
+  base *= 1. - .18 * uWet;
   vec3 col = base * (amb + uSunC * NdL * vSh * ao) + base * uSunC * tr * vSh * vec3(.7, .95, .4) + uSunC * sp * vSh;
+  col += amb * uWet * .03 * pow(1. - max(dot(N, V), 0.), 3.) * vT; // a wet film along the blades
   o = vec4(applyFog(col, vW) * uOut, .15 + .7 * vT);
 }`;
 
@@ -1927,6 +1963,29 @@ void main(){
   c = mix(c, vec3(1., .74, .3), smoothstep(.4, .75, f));
   c = mix(c, vec3(1., .93, .75), smoothstep(.78, 1., f));
   o = vec4(c * pow(f, 2.2) * I * uOut, f);
+}`;
+/* rain: drops wrap inside a box that rides with the camera; each is a thin streak along its fall, about a pixel wide however far */
+const RAIN_VS = `#version 300 es
+layout(location=0) in vec2 aQ; layout(location=1) in vec4 aS;
+uniform mat4 uVP; uniform vec3 uCam, uBox, uVel; uniform float uTime, uLen, uK;
+out vec2 vQ; out float vA;
+void main(){
+  vec3 h = uBox * .5;
+  vec3 p = mod(aS.xyz * uBox + uVel * (uTime * (.85 + .3 * aS.w)) - uCam + h, uBox) - h + uCam;
+  vec3 ax = normalize(uVel), toC = uCam - p; float d = length(toC);
+  vec3 side = normalize(cross(ax, toC / max(d, 1e-3)));
+  float wid = max(.004, d * .0014);
+  vec3 q = p + side * (aQ.x * wid) - ax * (aQ.y * uLen * (.7 + .6 * aS.w));
+  vA = smoothstep(1.6, 4.5, d) * (1. - smoothstep(h.x * .6, h.x * .95, d)) * uK * (.5 + .5 * aS.w);
+  vQ = aQ; gl_Position = uVP * vec4(q, 1.);
+}`;
+const RAIN_FS = `#version 300 es
+precision mediump float;
+in vec2 vQ; in float vA; uniform vec3 uCol; uniform float uOut; out vec4 o;
+void main(){
+  float a = (1. - vQ.x * vQ.x) * sin(vQ.y * 3.1416) * vA * .55;
+  if (a < .003) discard;
+  o = vec4(uCol * a * uOut, a);
 }`;
 const PT_VS = `#version 300 es
 layout(location=0) in vec3 aP; layout(location=1) in vec4 aC; layout(location=2) in float aS; uniform mat4 uVP; uniform float uPx; out vec4 vC;
@@ -2560,6 +2619,29 @@ function initGL() {
   WHITE_TEX = makeTex(wc);
   RS.hdr = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
   genTextureArrays(RS.q); genNoiseTex(); setTimeOfDay(ATM.tod || 'day');
+  initRain();
+}
+/* rain: one quad, drawn once per drop from a table of random seeds; all the motion happens in the vertex shader */
+const RAIN = { vao: null, n: 0 };
+function initRain() {
+  P.rain = compile(RAIN_VS, RAIN_FS);
+  const N = 3600, S = new Float32Array(N * 4); for (let i = 0; i < S.length; i++) S[i] = Math.random();
+  RAIN.n = N; RAIN.vao = gl.createVertexArray(); gl.bindVertexArray(RAIN.vao);
+  vbuf(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 0, 2);
+  vbuf(S, 1, 4, gl.STATIC_DRAW, 1);
+  gl.bindVertexArray(null);
+}
+function drawRain() {
+  if (!(WX.rain > 0.01) || !RAIN.vao || !P.rain) return;
+  const u = P.rain.u, w = ENV.wind || [.8, .6, 1], wk = 1.4 + WX.wind * .9; gl.useProgram(P.rain.p);
+  gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform3fv(u.uCam, CAM.eye); gl.uniform3f(u.uBox, 34, 22, 34);
+  gl.uniform3f(u.uVel, w[0] * wk, -9.5, w[1] * wk); gl.uniform1f(u.uTime, gtime % 600); gl.uniform1f(u.uLen, .62); gl.uniform1f(u.uK, Math.min(1, WX.rain * 1.2));
+  // the streaks carry the light of the grey sky around them, and lightning lights them all at once;
+  // drawn over (not added), so they read pale against dark ground and grey against a bright sky
+  const L = (ENV.hor[0] * .3 + ENV.hor[1] * .55 + ENV.hor[2] * .15) * (1.15 + WX.flash * 6) + (ENV.night ? .006 : 0);
+  gl.uniform3f(u.uCol, L * .92, L * .97, L * 1.05); gl.uniform1f(u.uOut, RS.out);
+  gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+  gl.bindVertexArray(RAIN.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, Math.round(RAIN.n * (RS.q === 'high' ? 1 : .5) * Math.min(1, WX.rain * 1.1)));
 }
 function setQuality(q) {
   RS.q = q; RS.sm = q === 'high' ? 2048 : 1024; RS.smSpan = q === 'high' ? 56 : 44; RS.sm2 = q === 'high' ? 2048 : 1024; RS.span2 = 3.6;
@@ -2720,7 +2802,7 @@ function litUniforms(Pr) {
   gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniformMatrix4fv(u.uSVP, false, SVP); gl.uniformMatrix4fv(u.uSVP2, false, SVP2);
   gl.uniform3fv(u.uSun, ENV.sun); gl.uniform3fv(u.uSunC, ENV.sunC); gl.uniform3fv(u.uSky, ENV.sky); gl.uniform3fv(u.uGnd, ENV.gnd);
   gl.uniform3fv(u.uFillD, ENV.fillD); gl.uniform3fv(u.uFillC, ENV.fillC); gl.uniform3fv(u.uHorC, ENV.hor);
-  gl.uniform3fv(u.uCam, CAM.eye); gl.uniform4fv(u.uFog, ENV.fog); gl.uniform3fv(u.uFogC, ENV.fogC);
+  gl.uniform3fv(u.uCam, CAM.eye); gl.uniform4fv(u.uFog, ENV.fog); gl.uniform3fv(u.uFogC, ENV.fogC); gl.uniform1f(u.uOvc, WX.ovc); gl.uniform3fv(u.uOvcC, ENV.ovcC || ZERO3);
   gl.uniform1f(u.uA, 0); _la = 0; gl.uniform1f(u.uOut, RS.out); gl.uniform1f(u.uTime, gtime); gl.uniform1f(u.uTwo, 0); gl.uniform1f(u.uUseTex, 0);
   gl.uniform4f(u.uWave, 0, 0, 0, 0); gl.uniform3f(u.uWAx, 0, 0, 0); gl.uniform3f(u.uWDir, 0, 0, 0);
   gl.uniform1f(u.uSTex, 1 / RS.sm); gl.uniform1f(u.uSTex2, 1 / RS.sm2);
@@ -2739,7 +2821,7 @@ function litUniforms(Pr) {
   const n = Math.min(4, PLIGHTS.length), pl = _plA, pc = _pcA;
   for (let i = 0; i < n; i++) { const L = PLIGHTS[i], j = i * 4; pl[j] = L.x; pl[j + 1] = L.y; pl[j + 2] = L.z; pl[j + 3] = L.r; pc[j] = L.c[0]; pc[j + 1] = L.c[1]; pc[j + 2] = L.c[2]; pc[j + 3] = L.i; }
   gl.uniform4fv(u.uPL, pl); gl.uniform4fv(u.uPLC, pc); gl.uniform1i(u.uNPL, n);
-  gl.uniform1f(u.uFade, 1); _lf = 1; gl.uniform3f(u.uVar, 0, 0, 0); _lv = null; gl.uniform2fv(u.uDith, RS.dith);
+  gl.uniform1f(u.uFade, 1); _lf = 1; gl.uniform3f(u.uVar, 0, 0, 0); _lv = null; gl.uniform2fv(u.uDith, RS.dith); if (u.uWet) gl.uniform1f(u.uWet, WX.wet);
   bindSH(Pr);
   _lt = null; _le = null; _lw = false; _lu = false; _ltw = -1;
 }
@@ -2931,7 +3013,7 @@ function render() {
     WATER.ssr = false;
   }
   gl.enable(gl.BLEND); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-  fxN.flush(VP, P.fx); psN.flush(VP, PX, P.pt); fxA.flush(VP, P.fx); if (FLAMES) FLAMES.flush(VP, P.fl); psA.flush(VP, PX, P.pt);
+  fxN.flush(VP, P.fx); psN.flush(VP, PX, P.pt); drawRain(); fxA.flush(VP, P.fx); if (FLAMES) FLAMES.flush(VP, P.fl); psA.flush(VP, PX, P.pt);
   gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
   if (T.msF) {
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, T.msF); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, T.main);
@@ -3121,8 +3203,24 @@ const TOD = {
   night: { el: 34, az: -28, expo: 1.6, fog: [30, 0.0035, 0.04, 0.9], cover: .3, haze: 1, wind: [.6, .8, .6], night: true, vol: [.007, .09, .6, .35],
     grade: { lift: [0, .004, .018], gain: [.96, .98, 1.06], gam: 1.04, sat: .86, shT: [-.01, 0, .02], hiT: [.012, .005, -.004] } }
 };
+/* weather laid over the hour: rain and storm soak the field under a low grey deck, mist fills the valley.
+   haze thickens the sky's own scattering (a white, wet sky), sun and sky scale the light, fog and vol the air */
+const WEATHER = {
+  clear: {},
+  rain: { rain: .72, wet: 1, haze: 4.5, cover: .95, sun: .08, sky: .82, fog: 2.1, fall: 0, vol: 1.7, sat: .8, wind: 1.7, expo: .78, ovc: .72 },
+  storm: { rain: 1, wet: 1, haze: 5.5, cover: .98, sun: .05, sky: .64, fog: 2.5, fall: 0, vol: 2.1, sat: .72, wind: 2.6, expo: .68, ovc: .84, bolts: true },
+  mist: { haze: 3, cover: .58, sun: .55, sky: .92, fog: 3.2, fall: 1.3, vol: 3.4, sat: .9, wind: .45, expo: 1, ovc: .25 }
+};
+const WX = { kind: 'clear', rain: 0, wet: 0, wind: 1, ovc: 0, bolts: false, flash: 0, nextBolt: 5, bolt: null };
+/* one call for the whole sky of a scene: the hour and the weather, rebuilt only when either changes */
+function setSky(tod, wx) {
+  wx = WEATHER[wx] ? wx : 'clear';
+  if (ATM.tod === tod && WX.kind === wx) return;
+  const w = WEATHER[wx]; Object.assign(WX, { kind: wx, rain: w.rain || 0, wet: w.wet || 0, wind: w.wind || 1, ovc: w.ovc || 0, bolts: !!w.bolts, flash: 0, bolt: null, nextBolt: 4 + Math.random() * 5 });
+  setTimeOfDay(tod);
+}
 function setTimeOfDay(name) {
-  const P = TOD[name] || TOD.day; ATM.tod = name; ATM.haze = P.haze;
+  const P = TOD[name] || TOD.day, w = WEATHER[WX.kind] || WEATHER.clear; ATM.tod = name; ATM.haze = P.haze * (w.haze || 1);
   const el = P.el * PI / 180, az = P.az * PI / 180, sun = [Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)];
   // the scattering table is costly to integrate, so each preset is built once and re-uploaded afterwards
   const key = P.el + '|' + P.az + '|' + P.haze; ATM.cache = ATM.cache || {};
@@ -3144,6 +3242,19 @@ function setTimeOfDay(name) {
   ENV.fogC = [1, 1, 1]; ENV.fog = P.fog.slice(); ENV.expo = P.expo; ENV.cover = P.cover; ENV.night = night ? 1 : 0;
   ENV.wind = P.wind; ENV.disk = night ? 0.012 : 0.0062; ENV.vol = P.vol || null; ENV.grade = P.grade || null; RS.aeReset = true; RS.taaReset = true;
   ENV.sunXZ = (() => { const l = Math.hypot(sun[0], sun[2]) || 1; return [sun[0] / l, sun[2] / l]; })();
+  if (WX.kind !== 'clear') {
+    // under cloud the sun is a glow and the light comes from the whole grey sky; at night the moon still shows through
+    const ws = night ? Math.max(w.sun, .4) : w.sun, wk = night ? Math.max(w.sky, 1) : w.sky;
+    ENV.sunC = ENV.sunC.map(c => c * ws); ENV.sky = ENV.sky.map(c => c * wk); ENV.hor = ENV.hor.map(c => c * wk); ENV.skyT = ENV.skyT.map(c => c * wk);
+    const Eh2 = ENV.sunC.map((c, i) => c * Math.max(0, sun[1]) + ENV.sky[i]);
+    ENV.gnd = [.2, .19, .12].map((a, i) => a * Eh2[i] * 1.1); ENV.fillC = ENV.gnd.map(g => g * .6);
+    ENV.ovcC = ENV.sky.map((c, i) => c * 1.05 + ENV.hor[i] * .22);
+    ENV.fog = [P.fog[0] / Math.sqrt(w.fog), P.fog[1] * w.fog, P.fog[2] * w.fall, w.fall ? Math.min(.97, P.fog[3] + .05) : .985]; // rain hides the peaks in cloud; mist lies low
+    if (ENV.vol) ENV.vol = [ENV.vol[0] * w.vol, ENV.vol[1] * .7, ENV.vol[2], ENV.vol[3]];
+    ENV.cover = Math.max(ENV.cover, w.cover); ENV.expo *= night ? 1 : w.expo;
+    ENV.wind = [P.wind[0], P.wind[1], P.wind[2] * w.wind];
+    if (P.grade) ENV.grade = Object.assign({}, P.grade, { sat: P.grade.sat * w.sat, gain: P.grade.gain.map((g, i) => g * [.98, 1, 1.03][i]) });
+  }
   if (typeof ENVP !== 'undefined') ENVP.dirty = true;
 }
 function bindSkyLUT(Pr, unit = 8) {
@@ -3155,7 +3266,8 @@ function drawSky() {
   gl.useProgram(P.sky.p); const su = P.sky.u, th = Math.tan(CAM.fov / 2);
   gl.uniform3fv(su.uF, CAM.F); gl.uniform3fv(su.uR, CAM.R); gl.uniform3fv(su.uU, CAM.U); gl.uniform2f(su.uK, th * W / H, th);
   gl.uniform3fv(su.uSun, ENV.sun); gl.uniform3fv(su.uSunC, ENV.sunC); gl.uniform3fv(su.uSky, ENV.sky);
-  gl.uniform1f(su.uTime, gtime); gl.uniform1f(su.uOut, RS.out); gl.uniform1f(su.uCover, ENV.cover); gl.uniform1f(su.uNight, ENV.night); gl.uniform1f(su.uDisk, ENV.disk); gl.uniform1f(su.uDiskK, ENVP.busy ? 0 : 1);
+  gl.uniform1f(su.uTime, gtime); gl.uniform1f(su.uOut, RS.out); gl.uniform1f(su.uCover, ENV.cover); gl.uniform1f(su.uNight, ENV.night); gl.uniform1f(su.uDisk, ENV.disk); gl.uniform1f(su.uDiskK, ENVP.busy ? 0 : 1 - WX.ovc);
+  gl.uniform1f(su.uOvc, WX.ovc); gl.uniform3fv(su.uOvcC, ENV.ovcC || ZERO3); gl.uniform1f(su.uFlash, WX.flash);
   const w = ENV.wind; gl.uniform2f(su.uCloudOff, gtime * w[0] * .0016, gtime * w[1] * .0016);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, TEX.noise); gl.uniform1i(su.uNoise, 1);
   bindSkyLUT(P.sky);
@@ -3344,7 +3456,7 @@ function buildCastle() {
     parapet(B, -66, -32, side * (46 + th / 2 - 0.55), groundH(side * 46, -48) + wy - 0.7, 'z', side);
     roundTower(B, side * 46, wz, 3.6, 11.5);
     roundTower(B, side * 5.7, wz + 0.2, 3.1, 13);
-    FLAGPOLES.push([side * 5.7, 15.2, wz + 0.2], [side * 46, 13.7, wz]);
+    FLAGPOLES.push([side * 5.7, 16.7, wz + 0.2], [side * 46, 13.7, wz]); // the gate's flags fly clear of its battlements, seen from the field
     FIRES.push([side * 5.7, 14.85, wz + 2.6]);
     B.cyl(C.iron, [side * 5.7, 14.45, wz + 2.6], [0.6, 0.55, 0.6], null, MAT.metal, 0, 12, 1.25, 0.7);
     BANNERS.push([side * 5.7 + side * 0.0, 10.8, wz + 3.35, side]);
@@ -3589,8 +3701,8 @@ function drawGrass() {
   gl.disable(gl.CULL_FACE); gl.useProgram(P.gr.p); const g = P.gr.u, hq = RS.q === 'high';
   gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniformMatrix4fv(g.uSVP, false, SVP); gl.uniform1f(g.uTime, gtime); gl.uniform3fv(g.uPush, [PL.x, 0, PL.z]);
   gl.uniform3fv(g.uCam, CAM.eye); gl.uniform3fv(g.uSun, ENV.sun); gl.uniform3fv(g.uSunC, ENV.sunC); gl.uniform3fv(g.uSky, ENV.sky); gl.uniform3fv(g.uGnd, ENV.gnd);
-  gl.uniform3fv(g.uFogC, ENV.fogC); gl.uniform4fv(g.uFog, ENV.fog); gl.uniform1f(g.uOut, RS.out); gl.uniform1f(g.uWidthK, 1.6);
-  const w = ENV.wind || [.8, .6, 1]; gl.uniform4f(g.uWind, w[0], w[1], w[2], 0);
+  gl.uniform3fv(g.uFogC, ENV.fogC); gl.uniform4fv(g.uFog, ENV.fog); gl.uniform1f(g.uOut, RS.out); gl.uniform1f(g.uWidthK, 1.6); gl.uniform1f(g.uOvc, WX.ovc); gl.uniform3fv(g.uOvcC, ENV.ovcC || ZERO3);
+  const w = ENV.wind || [.8, .6, 1]; gl.uniform4f(g.uWind, w[0], w[1], w[2], 0); gl.uniform1f(g.uWet, WX.wet);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, RS.rt.sm); gl.uniform1i(g.uShadow, 2);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, TEX.noise); gl.uniform1i(g.uNoise, 1);
   bindSH(P.gr); bindSkyLUT(P.gr);
@@ -3613,32 +3725,59 @@ function drawGrass() {
   gl.bindVertexArray(null); gl.enable(gl.CULL_FACE);
 }
 
-/* ---- the Kastrioti eagle, drawn to canvas for flags, caparison and the HUD crest ---- */
+/* ---- the Kastrioti eagle, drawn to canvas for flags, caparison, cape and the HUD crest ----
+   the double-headed eagle of the Albanian flag: two heads turned outward with open hooked beaks and crests, raised wings
+   of seven long feathers each, the tail fanned below and the talons spread. s is its size in the units of the old crest
+   (the whole bird is about 1.15 s wide and 0.9 s tall, centred a little above (cx, cy)). */
 function drawEagle(g, cx, cy, s, col) {
-  g.save(); g.translate(cx, cy); g.scale(s / 100, s / 100); g.fillStyle = col; g.strokeStyle = col; g.lineJoin = 'round'; g.lineCap = 'round';
-  g.beginPath(); g.ellipse(0, 6, 9, 19, 0, 0, TAU); g.fill();
+  g.save(); g.translate(cx, cy); const k = s / 100 * 0.8; g.scale(k, k); g.fillStyle = col; g.strokeStyle = col; g.lineJoin = 'round'; g.lineCap = 'round';
+  const poly = pts => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fill(); };
+  // one long wing feather: a blade from its root to its tip, widest past the middle, the point flicking up
+  const blade = (B, T, w) => {
+    const dx = T[0] - B[0], dy = T[1] - B[1], L = Math.hypot(dx, dy), nx = dy / L, ny = -dx / L;
+    g.beginPath(); g.moveTo(B[0] + nx * w, B[1] + ny * w);
+    g.bezierCurveTo(B[0] + dx * 0.45 + nx * w * 1.25, B[1] + dy * 0.45 + ny * w * 1.25, B[0] + dx * 0.8 + nx * w * 0.9, B[1] + dy * 0.8 + ny * w * 0.9, T[0], T[1]);
+    g.bezierCurveTo(B[0] + dx * 0.82 - nx * w * 0.7, B[1] + dy * 0.82 - ny * w * 0.7, B[0] + dx * 0.45 - nx * w * 1.15, B[1] + dy * 0.45 - ny * w * 1.15, B[0] - nx * w, B[1] - ny * w);
+    g.closePath(); g.fill();
+  };
   for (const sd of [-1, 1]) {
     g.save(); g.scale(sd, 1);
-    g.lineWidth = 7; g.beginPath(); g.moveTo(2, -8); g.quadraticCurveTo(5, -24, 13, -30); g.stroke();
-    g.beginPath(); g.arc(15, -32, 6.5, 0, TAU); g.fill();
-    g.beginPath(); g.moveTo(19, -36); g.quadraticCurveTo(28, -36, 30, -30); g.lineTo(20, -28); g.closePath(); g.fill();
-    g.beginPath(); g.moveTo(10, -37); g.lineTo(7, -45); g.lineTo(14, -38); g.fill();
-    for (let i = 0; i < 6; i++) {
-      const a = -1.32 + i * 0.27, L = 50 - i * 4.2;
-      g.save(); g.translate(7, -6); g.rotate(a);
-      g.beginPath(); g.moveTo(0, -4); g.lineTo(L, -4.6); g.lineTo(L + 6, 0); g.lineTo(L, 4.2); g.lineTo(0, 4); g.closePath(); g.fill(); g.restore();
+    // the neck rising out of the breast and turning outward; the head with its crest and an open hooked beak
+    g.lineWidth = 8.5; g.beginPath(); g.moveTo(3, -15); g.quadraticCurveTo(4.5, -29, 12.5, -33.5); g.stroke();
+    g.beginPath(); g.arc(14.5, -37.5, 6.8, 0, TAU); g.fill();
+    poly([[9.5, -41.5], [6, -49.5], [11.5, -45.5], [12.5, -49.5], [15, -44]]);
+    g.beginPath(); g.moveTo(19, -42.5); g.quadraticCurveTo(26.5, -44.5, 29.5, -37.8); g.lineTo(26.8, -37.3); g.quadraticCurveTo(24.3, -39.4, 20, -38.6); g.closePath(); g.fill();
+    poly([[20, -36.2], [26.6, -35], [24.4, -32.6], [19.3, -32.3]]);
+    // the wing, raised: a solid shoulder and seven long feathers fanning from straight up round to the side
+    const P = [37, -14];
+    poly([[10, -19], [22, -25.5], [32, -31], [40, -27], [48, -16], [45, -5], [32, -0.5], [13, 6]]);
+    for (const [deg, L, w] of [[-88, 47, 4.7], [-73, 49, 4.9], [-58, 49, 4.9], [-43, 47, 4.7], [-28, 44, 4.5], [-13, 40, 4.1], [2, 35, 3.7]]) {
+      const a = deg * PI / 180, ca = Math.cos(a), sa = Math.sin(a); blade([P[0] + ca * 7, P[1] + sa * 7], [P[0] + ca * L, P[1] + sa * L], w);
     }
-    for (let i = 0; i < 3; i++) {
-      g.save(); g.translate(1, 22); g.rotate(PI / 2 - 0.08 - i * 0.26);
-      g.beginPath(); g.moveTo(0, -3.2); g.lineTo(20 - i * 2, -3.4); g.lineTo(24 - i * 2, 0); g.lineTo(20 - i * 2, 3.4); g.lineTo(0, 3.2); g.closePath(); g.fill(); g.restore();
-    }
-    g.lineWidth = 3.6; g.beginPath(); g.moveTo(5, 18); g.lineTo(15, 27); g.lineTo(22, 25); g.moveTo(15, 27); g.lineTo(17, 34); g.moveTo(15, 27); g.lineTo(10, 33); g.stroke();
+    // breast and belly
+    g.beginPath(); g.ellipse(0, 1, 13.5, 24, 0, 0, TAU); g.fill();
+    // the tail: a fan of feathers, the middle one longest
+    poly([[0, 18], [9, 21], [12.5, 44], [8, 39.5], [6, 48.5], [3, 42.5], [0, 51]]);
+    // the legs, spread, with three hooked talons each
+    g.lineWidth = 5; g.beginPath(); g.moveTo(7, 14); g.lineTo(19, 26.5); g.stroke();
+    g.lineWidth = 2.6; g.beginPath(); g.moveTo(19, 26.5); g.lineTo(27, 24.8); g.lineTo(28.4, 27.4); g.moveTo(19, 26.5); g.lineTo(26, 31.4); g.lineTo(26.3, 34.4); g.moveTo(19, 26.5); g.lineTo(21, 34); g.lineTo(19, 36.5); g.stroke();
     g.restore();
   }
   g.restore();
 }
+const FLAG_RED = '#a20c17'; // the red of the flag; deep enough that sunlight on it stays red rather than going orange
 let flagTex = null, eagleTex = null;
-const flags = [];
+const flags = [], CFLAGS = [], FLAG_M = { eagle: null, otto: null };
+/* the castle's flags: the eagle (as in every battle after 1443), the Sultan's green, or the change of flags at the gate as it happens */
+function setCastleFlags(mode, k = 0) {
+  for (const f of CFLAGS) {
+    if (mode === 'raise' && !f.gate) continue;
+    let mesh = FLAG_M.eagle, y = f.top;
+    if (mode === 'otto') mesh = FLAG_M.otto;
+    else if (mode === 'raise') { if (k < 0.5) { mesh = FLAG_M.otto; y = lerp(f.top, f.low, sstep(0, 1, k * 2)); } else y = lerp(f.low, f.top, sstep(0, 1, (k - 0.5) * 2)); }
+    if (mesh) f.nd.mesh = mesh; f.nd.p[1] = y;
+  }
+}
 function planeMesh(w, h, nx, ny, tex, col = [1, 1, 1]) {
   const p = [], n = [], c = [], m = [], t = [];
   const V = (i, j) => [i / nx * w, -j / ny * h, 0];
@@ -3648,22 +3787,23 @@ function planeMesh(w, h, nx, ny, tex, col = [1, 1, 1]) {
   return makeMesh({ p, n, c, m, t }, { tex, two: true });
 }
 function buildFlags() {
-  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160;
-  const g = cv.getContext('2d'); g.fillStyle = '#b5121b'; g.fillRect(0, 0, 256, 160);
-  drawEagle(g, 128, 82, 118, '#0d0b0b'); flagTex = makeTex(cv);
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 320;
+  const g = cv.getContext('2d'); g.fillStyle = FLAG_RED; g.fillRect(0, 0, 512, 320);
+  drawEagle(g, 256, 169, 282, '#0a0808'); flagTex = makeTex(cv);
   const ec = document.createElement('canvas'); ec.width = 128; ec.height = 128;
   const e = ec.getContext('2d'); e.fillStyle = '#9e1016'; e.fillRect(0, 0, 128, 128); e.strokeStyle = '#d4a63c'; e.lineWidth = 7; e.strokeRect(4, 4, 120, 120);
   drawEagle(e, 64, 66, 82, '#0d0b0b'); eagleTex = makeTex(ec);
-  const mesh = planeMesh(3.0, 1.9, 10, 5, flagTex);
+  const mesh = planeMesh(3.0, 1.9, 10, 5, flagTex); FLAG_M.eagle = mesh;
   for (const f of FLAGPOLES) {
     const nd = new Node(mesh); nd.at(f[0] + 0.05, f[1] + 0.85, f[2]); nd.r[1] = PI * 0.15 + rand(-0.2, 0.2);
     nd.wave = [0.16, 2.4, 0, 0]; nd.wAx = [1, 0, 0]; nd.wDir = [0, 0, 1]; nd.ph = rand(0, 6);
-    scene.add(nd); flags.push(nd);
+    scene.add(nd); flags.push(nd); CFLAGS.push({ nd, top: f[1] + 0.85, low: f[1] - 1.3, gate: Math.abs(f[0]) < 8 && f[2] > -35 });
   }
   for (const [i, col] of [[0, '#8f1d1a'], [1, '#2c5638']]) {
     const bc = document.createElement('canvas'); bc.width = 128; bc.height = 64; const bg = bc.getContext('2d');
     bg.fillStyle = col; bg.fillRect(0, 0, 128, 64); bg.fillStyle = '#c9a04a'; bg.fillRect(0, 0, 128, 6); bg.fillRect(0, 58, 128, 6); bg.fillRect(0, 0, 6, 64);
-    const bm = planeMesh(2.4, 1.2, 8, 3, makeTex(bc));
+    const btx = makeTex(bc), bm = planeMesh(2.4, 1.2, 8, 3, btx);
+    if (i === 1) FLAG_M.otto = planeMesh(3.0, 1.9, 10, 5, btx); // the Sultan's green over Krujë before November 1443
     FLAGPOLES2.forEach((f, k) => { if (k % 2 !== i) return; const nd = new Node(bm); nd.at(f[0] + 0.05, f[1], f[2]); nd.r[1] = rand(-0.6, 0.6) + PI * 0.5; nd.wave = [0.18, 2.6, 0, 0]; nd.wAx = [1, 0, 0]; nd.wDir = [0, 0, 1]; nd.ph = rand(0, 6); scene.add(nd); flags.push(nd); });
   }
   const cc = document.getElementById('crest'); if (cc) drawEagle(cc.getContext('2d'), 32, 34, 54, '#120d0b');
@@ -3727,6 +3867,7 @@ function updateWorldFx(dt) {
     if (Math.random() < 0.2) psA.emit(s[0] + rand(-2, 2), gy + 1.5, s[1] + rand(-2, 2), rand(-1, 1), rand(3, 6), rand(-1, 1), rand(1.5, 2.5), 0.5, 0.15, [5, 2, .5], 1, 0.2, 0.3);
   }
   siegeFx(dt); if (PL.torch) torchFx();
+  bombardFx(dt); if (MS.cur && MS.cur.fx) MS.cur.fx(dt);
   // the lit shader takes four point lights: keep the torch and the ones nearest the camera
   if (PLIGHTS.length > 4) { const ex = CAM.tgt[0], ez = CAM.tgt[2]; PLIGHTS.sort((a, b) => (b.pri || 0) - (a.pri || 0) || Math.hypot(a.x - ex, a.z - ez) - Math.hypot(b.x - ex, b.z - ez)); }
   // sunlit motes and pollen drifting around the rider
@@ -3818,6 +3959,61 @@ function updateBirds(dt) {
 }
 function buildWorld() {
   buildTerrain(); buildMountains(); buildCastle(); buildGate(); buildFlora(); buildBattlefield(); buildRiver(); buildFlags(); buildFoliage(); buildBirds();
+}
+/* ---- weather in motion: splashes round the rider, lightning, thunder ---- */
+const SPLASH = [0, 0, 0];
+function updateWeather(dt) {
+  WX.flash = Math.max(0, WX.flash - dt * 3.2);
+  if (WX.bolt) { WX.bolt.t -= dt; if (WX.bolt.t <= 0) WX.bolt = null; }
+  if (AU.ctx) AU.rainSet(WX.rain * (G.state === 'gallery' ? .4 : 1), WX.bolts);
+  if (WX.rain > 0.01 && psN) {
+    const s = (ENV.sky[0] * .3 + ENV.sky[1] * .55 + ENV.sky[2] * .15) * .7; SPLASH[0] = s * .9; SPLASH[1] = s * .95; SPLASH[2] = s;
+    const n = WX.rain * dt * (RS.q === 'high' ? 700 : 350), cx = CAM.tgt[0], cz = CAM.tgt[2];
+    let k = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+    while (k-- > 0) {
+      const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 15, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, y = groundH(x, z);
+      if (Math.hypot(x - CAM.eye[0], z - CAM.eye[2]) < 4) continue; // none right under the lens
+      psN.emit(x, Math.max(y, WATER_Y) + 0.04, z, 0, 0.8, 0, 0.16, 0.035, 0.13, SPLASH, 0.36, 7, 0);
+    }
+  }
+  if (WX.bolts && G.state !== 'gallery') { WX.nextBolt -= dt; if (WX.nextBolt <= 0) { WX.nextBolt = 5 + Math.random() * 11; strike(); } }
+}
+/* a strike somewhere ahead: a jagged channel from the cloud base with a fork or two, the sky lit, thunder after it */
+function strike() {
+  // somewhere ahead where the foot of the channel lands inside the frame; failing that it flashes unseen in the cloud
+  const fl = Math.hypot(CAM.F[0], CAM.F[2]) || 1, fa = Math.atan2(CAM.F[0] / fl, CAM.F[2] / fl);
+  let gx = 0, gz = 0, gy = 0, d = 0, seen = false;
+  for (let k = 0; k < 12 && !seen; k++) {
+    const a0 = fa + (Math.random() - .5) * 1.1; d = 120 + Math.random() * 200;
+    gx = CAM.eye[0] + Math.sin(a0) * d; gz = CAM.eye[2] + Math.cos(a0) * d; gy = groundH(gx, gz);
+    project(gx, gy, gz, _pp); seen = _pp.ok && _pp.x > innerWidth * .08 && _pp.x < innerWidth * .92 && _pp.y > innerHeight * .12 && _pp.y < innerHeight * .75;
+  }
+  const top = gy + 70 + Math.random() * 35, N = 22, pts = [];
+  let x = gx + (Math.random() - .5) * 30, z = gz + (Math.random() - .5) * 30;
+  for (let i = 0; i <= N; i++) { pts.push([x, top + (gy - top) * i / N, z]); x += (gx - x) / (N - i + 1) + (Math.random() - .5) * 7; z += (gz - z) / (N - i + 1) + (Math.random() - .5) * 7; }
+  const forks = [];
+  for (let b = 0; b < 2; b++) {
+    const p0 = pts[4 + Math.floor(Math.random() * 10)], fp = [p0.slice()], dx = (Math.random() - .5) * 6, dz = (Math.random() - .5) * 6;
+    let fx = p0[0], fy = p0[1], fz = p0[2];
+    for (let i = 0; i < 7; i++) { fx += dx + (Math.random() - .5) * 5; fy -= 5 + Math.random() * 4; fz += dz + (Math.random() - .5) * 5; fp.push([fx, fy, fz]); }
+    forks.push(fp);
+  }
+  WX.bolt = seen ? { pts, forks, t: 0.34, t0: 0.34 } : null; WX.flash = seen ? 1 : .55; flash(0.1, [0.78, 0.85, 1]);
+  if (AU.ctx) AU.thunder(d / 343 * 0.5 + 0.12, 1.2 - d / 300);
+}
+function drawBolt() {
+  const b = WX.bolt; if (!b) return;
+  const age = b.t0 - b.t, I = age < .05 ? 1 : age < .1 ? .2 : age < .17 ? .9 : Math.max(0, b.t / .17) * .55;
+  const seg = (p, q, w, k) => {
+    const dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2], ex = CAM.eye[0] - p[0], ey = CAM.eye[1] - p[1], ez = CAM.eye[2] - p[2];
+    let sx = dy * ez - dz * ey, sy = dz * ex - dx * ez, sz = dx * ey - dy * ex; const l = Math.hypot(sx, sy, sz) || 1; sx *= w / l; sy *= w / l; sz *= w / l;
+    const r = 9 * k, g = 9.8 * k, bl = 12 * k;
+    fxA.v(p[0] - sx, p[1] - sy, p[2] - sz, r, g, bl, 1, 0, 0, 2); fxA.v(p[0] + sx, p[1] + sy, p[2] + sz, r, g, bl, 1, 0, 0, 2); fxA.v(q[0] + sx, q[1] + sy, q[2] + sz, r, g, bl, 1, 0, 0, 2);
+    fxA.v(p[0] - sx, p[1] - sy, p[2] - sz, r, g, bl, 1, 0, 0, 2); fxA.v(q[0] + sx, q[1] + sy, q[2] + sz, r, g, bl, 1, 0, 0, 2); fxA.v(q[0] - sx, q[1] - sy, q[2] - sz, r, g, bl, 1, 0, 0, 2);
+  };
+  // a hot core and a wide soft glow around it
+  for (let i = 0; i < b.pts.length - 1; i++) { seg(b.pts[i], b.pts[i + 1], 2.2, I); seg(b.pts[i], b.pts[i + 1], 8, I * .1); }
+  for (const f of b.forks) for (let i = 0; i < f.length - 1; i++) { const k = I * (1 - i / f.length); seg(f[i], f[i + 1], 1.1, k); seg(f[i], f[i + 1], 4, k * .08); }
 }
 /* ===== Foliage: procedurally grown trees (oak, fir, black pine, bushes) with leaf-card crowns,
    three LODs with cross-fades, wind, translucent leaves, alpha-tested shadows. Everything is instanced. ===== */
@@ -4199,7 +4395,7 @@ precision highp float; precision highp sampler2DShadow; precision highp sampler2
 in vec3 vW; in vec3 vN; in vec2 vUV; in vec4 vD; in vec4 vI; in vec4 vSP; in vec4 vSP2;
 uniform vec3 uCam, uSun, uSunC, uSky, uGnd, uFogC, uHorC; uniform vec4 uFog;
 uniform sampler2DShadow uShadow, uShadow2; uniform float uSTex, uSTex2, uOut, uA2C, uAtlasN;
-uniform sampler2D uAtlas; uniform sampler2DArray uWA, uWN; uniform vec2 uDith; uniform float uTime;
+uniform sampler2D uAtlas; uniform sampler2DArray uWA, uWN; uniform vec2 uDith; uniform float uTime, uWet;
 out vec4 o;
 ${GLSL_NOISE}
 ${FOG_GLSL}
@@ -4225,7 +4421,7 @@ void main(){
     a.a *= 1. + max(lod, 0.) * .28;
     if (uA2C > .5) { alpha = clamp((a.a - .45) / max(fwidth(a.a), 1e-3) + .5, 0., 1.) * cov; if (alpha < .01) discard; }
     else if (a.a < .45) discard;
-    vec3 alb = lin(a.rgb) * tint * 1.08;
+    vec3 alb = lin(a.rgb) * tint * 1.08 * (1. - .2 * uWet);
     float NdL = dot(N, uSun), sh = shadowF() * cloud;
     float ao = vD.y;
     float dif = clamp(NdL * .55 + .45, 0., 1.); dif *= dif;
@@ -4242,7 +4438,7 @@ void main(){
     float im = inversesqrt(max(max(dot(T, T), dot(B, B)), 1e-30));
     vec2 xy = nm.xy * 2. - 1.; vec3 tn = vec3(xy, sqrt(max(1. - dot(xy, xy), 0.)));
     N = normalize(T * im * tn.x + B * im * tn.y + N * tn.z);
-    vec3 alb = lin(a.rgb) * mix(vec3(1.), vec3(.95, .92, .88), vI.y) * .85;
+    vec3 alb = lin(a.rgb) * mix(vec3(1.), vec3(.95, .92, .88), vI.y) * .85 * (1. - .42 * uWet);
     float NdL = dot(N, uSun), sh = NdL > -.5 ? shadowF() * smoothstep(-.5, -.3, NdL) * cloud : 0.;
     float ao = vD.y * mix(1., nm.z, .8);
     vec3 amb = ambIrr(N) * ao;
@@ -4327,6 +4523,7 @@ function folUniformsCommon(P, vp) {
   const u = P.u; gl.useProgram(P.p);
   gl.uniformMatrix4fv(u.uVP, false, vp); gl.uniform1f(u.uTime, gtime);
   const w = ENV.wind || [0.8, 0.6, 1]; gl.uniform4f(u.uWind, w[0], w[1], w[2], 0);
+  if (u.uWet) gl.uniform1f(u.uWet, WX.wet);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, FOL.atlas); gl.uniform1i(u.uAtlas, 0);
 }
 function drawFoliageInst() {
@@ -4346,7 +4543,7 @@ function drawFoliage() {
   const P = FOL.P, u = P.u; folUniformsCommon(P, VP);
   gl.uniformMatrix4fv(u.uSVP, false, SVP); gl.uniformMatrix4fv(u.uSVP2, false, SVP2);
   gl.uniform3fv(u.uCam, CAM.eye); gl.uniform3fv(u.uSun, ENV.sun); gl.uniform3fv(u.uSunC, ENV.sunC); gl.uniform3fv(u.uSky, ENV.sky); gl.uniform3fv(u.uGnd, ENV.gnd);
-  gl.uniform3fv(u.uFogC, ENV.fogC); gl.uniform4fv(u.uFog, ENV.fog); gl.uniform3fv(u.uHorC, ENV.hor); gl.uniform1f(u.uOut, RS.out);
+  gl.uniform3fv(u.uFogC, ENV.fogC); gl.uniform4fv(u.uFog, ENV.fog); gl.uniform3fv(u.uHorC, ENV.hor); gl.uniform1f(u.uOut, RS.out); gl.uniform1f(u.uOvc, WX.ovc); gl.uniform3fv(u.uOvcC, ENV.ovcC || ZERO3);
   gl.uniform1f(u.uSTex, 1 / RS.sm); gl.uniform1f(u.uSTex2, 1 / RS.sm2); gl.uniform1f(u.uA2C, FOL.a2c ? 1 : 0); gl.uniform1f(u.uAtlasN, FOL.atlasN); gl.uniform2fv(u.uDith, RS.dith);
   gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, RS.rt.sm); gl.uniform1i(u.uShadow, 2);
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, RS.rt.sm2); gl.uniform1i(u.uShadow2, 3);
@@ -4609,6 +4806,18 @@ function buildModels() {
     .cone(0xc9ced1, [0, 0, 0.93], [0.03, 0.2, 0.012], [PI / 2, 0, 0], MAT.metal, 0, 4).cyl(0x9b1b17, [0, 0, 0.7], [0.018, 0.05, 0.018], [PI / 2, 0, 0], MAT.cloth, 0, 6).mesh();
   M.torch = new GB().cyl(0x5a3a22, [0, -0.05, 0], [0.018, 0.62, 0.018], null, MAT.wood, 0, 6).cyl(0x2a1d12, [0, -0.38, 0], [0.034, 0.14, 0.034], null, MAT.cloth, 0, 8, 0.9, 1).mesh();
   M.saber = heroSaber(); M.kilij = kilijMesh(); M.bigKilij = kilijMesh(1.25, 0xe4e8ea); M.spear = spearMesh(); M.bow = bowMesh(); M.shield = shieldMesh(); M.arrow = arrowMesh();
+  // a bombard's stone ball, and an iron fire basket on a pole for the gate at night
+  M.ball = new GB().sph(0x6a645c, [0, 0, 0], 0.26, null, MAT.stone, 0, 0, 2).mesh();
+  {
+    const B = new GB(); B.cyl(0x2e2219, [0, 1.15, 0], [0.065, 2.3, 0.065], null, MAT.wood, 0, 6);
+    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; B.box(0x2e2219, [Math.cos(a) * 0.22, 0.12, Math.sin(a) * 0.22], [0.5, 0.08, 0.08], [0, -a, 0.35], MAT.wood); }
+    B.cyl(C.iron, [0, 2.38, 0], [0.32, 0.34, 0.32], null, MAT.metal, 0, 10, 1.3, 0.7);
+    M.brazier = B.mesh();
+    const F = new GB();
+    for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; F.sph(0x5e5850, [Math.cos(a) * 0.62, 0.08, Math.sin(a) * 0.62], [0.24, 0.17, 0.22], null, MAT.rock, 0, 0.1, 1); }
+    for (let k = 0; k < 3; k++) F.cyl(0x3a2a1c, [0, 0.2, 0], [0.07, 1.1, 0.07], [PI / 2 - 0.2, k * 2.1, 0], MAT.wood, 0, 5);
+    M.firepit = F.mesh();
+  }
   M.cape = 'hero'; M.paCape = 'pasha'; capeTex('hero'); capeTex('pasha');
   {
     const B = new GB();
@@ -4644,7 +4853,7 @@ function makeMountedRig(horse, rider, o = {}) {
   const legs = [['fUL', 'fLL', 'fFL', 1], ['fUR', 'fLR', 'fFR', 1], ['hUL', 'hLL', 'hFL', 0], ['hUR', 'hLR', 'hFR', 0]].map(([a, b, c, f]) => ({ up: H[a], lo: H[b], ft: H[c], front: !!f }));
   const rig = { root: hs.root, pivot: H.pivot, body: H.body, neck: H.neck1, neck2: H.neck2, head: H.head, tail: H.tail1, tail2: H.tail2, tail3: H.tail3, legs, seat: H.seat,
     twist: R.chest, rhead: R.head, armR: R.armR, armL: R.armL, foreR: R.foreR, foreL: R.foreL, kind: 'horse', ph: Math.random(), hip: 0, hs, rs };
-  rig.wpn = attachWeapon(rs.sockets.gripR, o.wpn || MODELS.kilij, o.wRot || 0);
+  rig.wpn = o.wpn === false ? rs.sockets.gripR.add(new Node()) : attachWeapon(rs.sockets.gripR, o.wpn || MODELS.kilij, o.wRot || 0);
   if (o.cape) rig.cape = heroCape(rig, H, R);
   if (o.decal && hs.sockets.decalL) {
     const dm = planeMesh(0.5, 0.5, 1, 1, eagleTex);
@@ -4718,7 +4927,7 @@ function updateReins() {
     if (!r.root.parent) { if (MOUNTED.length > 40) MOUNTED.splice(i, 1); continue; }
     if (r.root.parent !== scene || !r.root.vis || (r.root.fade != null && r.root.fade < 0.5) || n >= REINS.max) continue;
     const ex = r.root.w[12] - CAM.eye[0], ez = r.root.w[14] - CAM.eye[2]; if (ex * ex + ez * ez > 2500) continue;
-    const R = r.reins, end = r.rs.root.vis === false ? null : (r === PL.rig && PL.torch ? R.pommel : R.hand), q = _rq;
+    const R = r.reins, end = r.rs.root.vis === false ? null : (r.loose || (r === PL.rig && PL.torch) ? R.pommel : R.hand), q = _rq;
     if (!end) continue;
     const loose = end === R.pommel; R.slack = damp(R.slack, loose ? 1 : 0, 6, RS.dt || 0.016);
     const h = M4.pt(end.w, 0, 0, 0);
@@ -4899,7 +5108,7 @@ class Cloth {
     const X = this.X, Xp = this.Xp, nx = this.nx, ny = this.ny, N = this.N, A = this.A, Ap = this.Ap;
     // wind: steady breeze with gusts, plus turbulence that grows with the relative airspeed
     const gust = 1 + 0.45 * Math.sin(t * 0.7 + this.ph) + 0.3 * Math.sin(t * 2.3 + this.ph * 2);
-    const wx = 0.5 * gust, wz = 0.28 * gust, h2 = h * h, damp = 0.993, kn = 2.4, kt = 0.2;
+    const wk = WX.wind, wx = 0.5 * gust * wk, wz = 0.28 * gust * wk, h2 = h * h, damp = 0.993, kn = 2.4, kt = 0.2; // storms blow harder
     for (let j = 1; j < ny; j++) for (let i = 0; i < nx; i++) {
       const k = j * nx + i, k3 = k * 3;
       const il = Math.max(i - 1, 0), ir = Math.min(i + 1, nx - 1), ju = j - 1, jd = Math.min(j + 1, ny - 1);
@@ -5035,7 +5244,10 @@ function burst(x, y, z, n, col, spd, size, life, add = true) {
   const ps = add ? psA : psN;
   for (let i = 0; i < n; i++) { const a = rand(0, TAU), v = rand(0.3, 1) * spd; ps.emit(x, y, z, Math.cos(a) * v, rand(0.5, 1.6) * spd * 0.6, Math.sin(a) * v, life * rand(0.6, 1.2), size, size * 0.25, col, 1, 9, 2); }
 }
+const MUD = [0.034, 0.029, 0.023];
 function dust(x, z, n = 6, s = 1) {
+  // on soaked ground nothing raises dust: hooves and falls throw up a spatter of mud and water instead
+  if (WX.wet > 0.5) { for (let i = 0; i < n; i++) { const a = rand(0, TAU), v = rand(0.6, 2.2) * s; psN.emit(x + rand(-.3, .3), groundH(x, z) + 0.1, z + rand(-.3, .3), Math.cos(a) * v, rand(1.4, 3.2) * Math.min(1.4, s), Math.sin(a) * v, rand(0.45, 0.8), 0.07 * s, 0.11 * s, MUD, 0.85, 8, 0.6); } return; }
   for (let i = 0; i < n; i++) { const a = rand(0, TAU), v = rand(0.5, 2) * s; psN.emit(x + rand(-.3, .3), groundH(x, z) + 0.25, z + rand(-.3, .3), Math.cos(a) * v, rand(0.3, 1.2), Math.sin(a) * v, rand(0.7, 1.2), 0.7 * s, 2.4 * s, DUST, 0.38, -0.2, 2.2); }
 }
 function flash(k, c) { RS.flash = Math.max(RS.flash, reduceMotion ? k * 0.3 : k); if (c) RS.flashC = c; }
@@ -5044,18 +5256,21 @@ const HIT = { quiet: false, src: '' }; // src: what dealt the blow (sword, heavy
 function hurtUnit(u, dmg, kx, kz, kb, stun, heavy) {
   if (u.dead) return;
   if (u.parried > 0 && u.team === 1) dmg *= 1.5;
-  else if (u.def && u.def.duel && !(u.stun > 0.05)) dmg *= heavy ? 0.75 : 0.45; // Ballaban's guard: he must be opened up by a parry, a javelin or a heavy blow
+  else if (u.def && u.def.guarded && !(u.stun > 0.05)) dmg *= heavy ? 0.75 : 0.45; // Ballaban's guard: he must be opened up by a parry, a javelin or a heavy blow
   u.hp -= dmg; u.flash = 1; u.flinch = 1; u.hpT = 2.6; u.lastKx = kx; u.lastKz = kz; u.stun = Math.max(u.stun, (u.def && u.def.boss) ? stun * 0.25 : u.type === 'ram' ? 0 : stun);
   const l = Math.hypot(kx, kz) || 1, kbm = (u.def && (u.def.boss || u.def.ram)) ? 0.2 : u.def && u.def.cav ? 0.5 : 1;
   u.kbx += kx / l * kb * kbm; u.kbz += kz / l * kb * kbm;
-  const hy = u.y + (u.type === 'sipahi' ? 2.2 : u.type === 'ram' ? 1.4 : 1.3) * u.rig.root.s[0];
+  const hy = u.y + (u.def && u.def.cav ? 2.2 : u.type === 'ram' ? 1.4 : 1.3) * u.rig.root.s[0];
   burst(u.x, hy, u.z, heavy ? 14 : 8, SPARK, heavy ? 6 : 4, 0.3, 0.35);
   burst(u.x, hy - 0.2, u.z, heavy ? 6 : 3, EMBER, 3, 0.25, 0.45);
   if (u.team === 1 && !HIT.quiet) popNum(u.x, hy + 0.6, u.z, Math.round(dmg), heavy ? 'big' : '');
+  // a commander who flees rather than falls: beaten down to a quarter, he turns his horse and runs for it
+  if (u.def && u.def.flees && !u.flee && u.hp <= u.maxHp * 0.25) { u.hp = Math.max(u.hp, u.maxHp * 0.18); u.flee = true; u.atkT = -1; if (MS.cur) missionEvent('flee', u); return; }
   if (u.hp <= 0) killUnit(u);
 }
 function killUnit(u) {
   u.dead = true; u.deadT = 0; u.hp = 0;
+  if (u.def && u.def.yields) u.surrender = true; // taken alive: he kneels and stays where he fell
   if (u.lastKx || u.lastKz) u.fallYaw = Math.atan2(-(u.lastKx || 0), -(u.lastKz || 1));
   if (u.team === 1) {
     G.kills++; G.score += u.def.score; G.streak = (G.streak || 0) + 1; G.streakT = 3.2; if (G.streak >= 3) G.score += Math.min(G.streak, 12) * 2;
@@ -5445,7 +5660,13 @@ const EDEF = {
   agha: { hp: 760, speed: 3.1, dmg: 19, range: 2.5, cd: 1.4, r: 0.8, aggro: 60, score: 300, glory: 40, boss: true },
   pasha: { hp: 1600, speed: 3.0, dmg: 24, range: 2.9, cd: 1.35, r: 0.95, aggro: 60, score: 600, glory: 60, boss: true },
   ali: { hp: 1700, speed: 3.1, dmg: 21, range: 2.9, cd: 1.3, r: 0.95, aggro: 70, score: 500, glory: 50, boss: true },
-  ballaban: { hp: 2800, speed: 11, dmg: 18, range: 2.4, cd: 1.3, r: 1.1, aggro: 99, score: 900, glory: 60, boss: true, cav: true, duel: true }
+  ballaban: { hp: 2800, speed: 11, dmg: 18, range: 2.4, cd: 1.3, r: 1.1, aggro: 99, score: 900, glory: 60, boss: true, cav: true, duel: true, guarded: true },
+  // light horse archers: they ride rings round the hero, shoot over the horse's shoulder and gallop off when he closes
+  akinxhi: { hp: 70, speed: 10.2, dmg: 8, range: 24, cd: 2.4, r: 1.0, aggro: 80, score: 20, glory: 10, cav: true, ranged: true, hark: true },
+  // Isak Bey rides like Ballaban but without his guard; beaten down, he flees the field
+  isak: { hp: 2300, speed: 10.6, dmg: 17, range: 2.4, cd: 1.3, r: 1.1, aggro: 99, score: 800, glory: 60, boss: true, cav: true, duel: true, flees: true },
+  // Hamza Kastrioti fights on foot; beaten, he throws down his sword and is taken alive
+  hamza: { hp: 1500, speed: 3.3, dmg: 20, range: 2.8, cd: 1.3, r: 0.95, aggro: 70, score: 600, glory: 50, boss: true, yields: true }
 };
 const WAVES = [
   { azap: 8 }, { azap: 8, jan: 4 }, { azap: 8, jan: 5, archer: 4, ram: 1 }, { azap: 8, jan: 6, archer: 5, sipahi: 3 },
@@ -5460,6 +5681,17 @@ function makeRamRig() {
   log.at(0, 1.25, 0.6);
   return { root, body, log, hip: 0, kind: 'ram' };
 }
+/* riders who share the spahi's sculpt get their own colours through the same channels as the hero's looks:
+   a new coat (rgb, dapples) and mane (rgb, leg shading) for the horse, and the red cloth dyed */
+const FOE_LOOK = {
+  akinxhi: { ban: [0.2, 0.1, 0.03, 1], coat: [0.36, 0.21, 0.085, 0.25], hair: [0.03, 0.022, 0.016, 0.4] },
+  isak: { ban: [0.02, 0.045, 0.2, 1], coat: [0.36, 0.36, 0.35, 1.6], hair: [0.1, 0.1, 0.095, 0.35] },
+  hamza: { ban: [0.025, 0.11, 0.045, 1], coat: [0, 0, 0, 0], hair: [0, 0, 0, 0] }
+};
+function foeLook(rig, k) {
+  const L = FOE_LOOK[k]; if (!L.f) L.f = { ban: new Float32Array(L.ban), coat: new Float32Array(L.coat), hair: new Float32Array(L.hair) };
+  if (rig.root.skin) rig.root.skin.look = L.f; if (rig.rs && rig.rs.root.skin) rig.rs.root.skin.look = L.f;
+}
 function rigFor(type) {
   const M = MODELS;
   switch (type) {
@@ -5472,6 +5704,14 @@ function rigFor(type) {
     case 'pasha': return makeHumanRig('pasha', { wpn: M.bigKilij, cape: M.paCape, scale: 1.32, lodDist: 22 });
     case 'ali': { const r = makeHumanRig('pasha', { wpn: M.bigKilij, cape: M.paCape, scale: 1.3, lodDist: 22 }); r.root.tint = [0.86, 0.98, 1.08]; return r; }
     case 'ballaban': { const r = makeMountedRig('sipHorse', 'sipRider', { wpn: M.bigKilij }); r.root.s = [1.12, 1.12, 1.12]; r.root.tint = [0.46, 0.4, 0.38]; r.rs.root.tint = [1.06, 0.96, 0.9]; return r; }
+    case 'akinxhi': {
+      // a smaller dun steppe horse, the bow in the left fist, the right hand free to draw; the reins hang on the saddle
+      const r = makeMountedRig('sipHorse', 'sipRider', { wpn: false }); r.root.s = [0.94, 0.94, 0.94]; foeLook(r, 'akinxhi');
+      const b = r.rs.sockets.gripL.add(new Node(M.bow)); b.r[0] = 0.69; r.off = b; r.loose = true; return r;
+    }
+    case 'isak': { const r = makeMountedRig('sipHorse', 'sipRider', { wpn: M.bigKilij }); r.root.s = [1.1, 1.1, 1.1]; foeLook(r, 'isak'); return r; }
+    // an Albanian in the Sultan's service: highland dress with its red turned the Sultan's green, a pasha's cape, a great sword
+    case 'hamza': { const r = makeHumanRig('ally', { wpn: M.bigKilij, cape: M.paCape, scale: 1.26, lodDist: 22 }); foeLook(r, 'hamza'); r.root.tint = [0.94, 0.94, 0.96]; return r; }
     case 'ram': return makeRamRig();
   }
 }
@@ -5514,12 +5754,13 @@ function spawnAlly(x, z, o = {}) {
   dust(x, z, 10, 1.2); burst(x, y + 1, z, 12, GOLD, 3, 0.3, 0.6);
   return u;
 }
-function damageGate(n) {
+function damageGate(n, gun) {
   if (G.state !== 'play' || G.noGate) return;
-  n /= G.foeDmg || 1; // the daily rule of hot blood is about the fight in the field, not the walls
-  G.gateHp = Math.max(0, G.gateHp - n); G.gateFlash = 0.6; G.gateAlert = 3.5; gateNode.p[2] = -28.75;
+  if (!gun) n *= ((MS.cur && MS.cur.gateK) || 1) / (G.foeDmg || 1); // the daily rule of hot blood is about the fight in the field, not the walls
+  G.gateHp = Math.max(0, G.gateHp - n); G.gateFlash = 0.6; gateNode.p[2] = -28.75;
   updateGateTint();
-  if (G.gateWarnT <= 0) { banner(t('gateHit'), '', true); G.gateWarnT = 10; }
+  // a stone ball on the walls is seen and heard; men at the gate are called out, with an arrow to it
+  if (!gun) { G.gateAlert = 3.5; if (G.gateWarnT <= 0) { banner(t('gateHit'), '', true); G.gateWarnT = 10; } }
   if (G.gateHp <= 0) { AU.lose(); endGame(false, 'gate'); }
 }
 function updateGateTint() { const k = 0.45 + 0.55 * G.gateHp / G.gateMax; gateNode.tint = [k, k * 0.95, k * 0.9]; }
@@ -5638,6 +5879,66 @@ function cavAI(u, dt) {
   rig.armR.r[0] = damp(rig.armR.r[0], dd < 6 ? -2.4 + Math.sin(gtime * 9) * 0.8 : -0.6, 8, dt);
   return u.spd;
 }
+/* the akinxhi keep a ring some fifteen metres round the hero and loose arrows from the saddle, turning to shoot over
+   the horse's shoulder; when he rides at them they wheel away and come round again. With the hero far off they ride at the gate */
+function harkAI(u, dt) {
+  const rig = u.rig; u.modeT = (u.modeT || 0) - dt;
+  const gate = !G.noGate && (!PL.alive || Math.hypot(PL.x - u.x, PL.z - u.z) > 42);
+  const mx = gate ? 0 : PL.x, mz = gate ? GATE.z + 4 : PL.z;
+  const dx = mx - u.x, dz = mz - u.z, d = Math.hypot(dx, dz) || 1;
+  if (!u.mode || u.mode === 'charge') { u.mode = 'ring'; u.dir = Math.random() < 0.5 ? 1 : -1; }
+  let want = u.speed * 0.82;
+  if (u.mode === 'ring') {
+    const R = gate ? 20 : 16, a = Math.atan2(u.x - mx, u.z - mz) + u.dir * 0.55;
+    turnToward(u, mx + Math.sin(a) * R, Math.max(ARENA.z0 + 6, mz + Math.cos(a) * R), 2.4 * dt);
+    if (!gate && PL.alive && (d < 8 || (PL.chargeT > 0 && d < 15))) { u.mode = 'away'; u.modeT = rand(1.5, 2.3); }
+  } else {
+    turnToward(u, u.x - dx, u.z - dz, 3.4 * dt); want = u.speed;
+    if (u.modeT <= 0 && d > 13) { u.mode = 'ring'; u.dir = -u.dir; }
+  }
+  // the shot: drawn for half a second, the rider turned in the saddle toward the mark
+  const rel = angDiff(u.face, Math.atan2(dx, dz));
+  if (u.atkT < 0 && u.atkCd <= 0 && d < u.def.range && (gate || PL.alive) && Math.abs(rel) < 2.4 && !(u.stun > 0)) { u.atkT = 0; u.struck = false; }
+  if (u.atkT >= 0) {
+    u.atkT += dt;
+    rig.twist.r[1] = damp(rig.twist.r[1], clamp(rel, -1.5, 1.5) * 0.7, 10, dt);
+    rig.armL.r[0] = damp(rig.armL.r[0], -1.5, 14, dt); rig.armL.r[1] = damp(rig.armL.r[1], 0, 14, dt); rig.armL.r[2] = damp(rig.armL.r[2], 0, 14, dt); rig.foreL.r[0] = damp(rig.foreL.r[0], -0.05, 14, dt);
+    rig.armR.r[0] = damp(rig.armR.r[0], -1.45, 14, dt); rig.armR.r[1] = damp(rig.armR.r[1], 0.55, 14, dt);
+    rig.foreR.r[0] = damp(rig.foreR.r[0], u.atkT < 0.55 ? -1.75 : -0.6, u.atkT < 0.55 ? 9 : 30, dt);
+    if (!u.struck && u.atkT > 0.55) {
+      u.struck = true;
+      const sx = u.x + Math.sin(u.face) * 0.3, sy = u.y + 2.7 * rig.root.s[0], sz = u.z + Math.cos(u.face) * 0.3;
+      if (gate) fireArrow(sx, sy, sz, rand(-2, 2), 3, GATE.z + 0.6, 24, 1, 0).gate = 3;
+      else { const T = d / 24; fireArrow(sx, sy, sz, PL.x + PL.vx * T * 0.6 + rand(-1.3, 1.3), PL.y + 1.9, PL.z + PL.vz * T * 0.6 + rand(-1.3, 1.3), 24, 1, u.dmg); }
+    }
+    if (u.atkT > 0.85) { u.atkT = -1; u.atkCd = u.def.cd * rand(0.8, 1.35); }
+  } else {
+    rig.twist.r[1] = damp(rig.twist.r[1], 0, 4, dt);
+    rig.armL.r[0] = damp(rig.armL.r[0], -0.45, 6, dt); rig.armL.r[1] = damp(rig.armL.r[1], -0.35, 6, dt); rig.armL.r[2] = damp(rig.armL.r[2], 0.2, 6, dt); rig.foreL.r[0] = damp(rig.foreL.r[0], -0.9, 6, dt);
+    rig.armR.r[0] = damp(rig.armR.r[0], -0.5, 6, dt); rig.armR.r[1] = damp(rig.armR.r[1], 0, 6, dt); rig.foreR.r[0] = damp(rig.foreR.r[0], -0.7, 6, dt);
+  }
+  if (u.x < ARENA.x0 + 4 || u.x > ARENA.x1 - 4 || u.z < ARENA.z0 + 4 || u.z > ARENA.z1 - 4) turnToward(u, (ARENA.x0 + ARENA.x1) / 2, (ARENA.z0 + ARENA.z1) / 2, 3 * dt);
+  u.spd = damp(u.spd || 0, want * (u.stun > 0 ? 0.35 : 1), 2.4, dt);
+  u.x += Math.sin(u.face) * u.spd * dt; u.z += Math.cos(u.face) * u.spd * dt;
+  return u.spd;
+}
+/* a broken army: each man runs for the nearest edge of the field away from the hero and is gone once out of it */
+function fleeAI(u, dt) {
+  const cav = u.def.cav, rig = u.rig; u.entering = false; u.atkT = -1; u.slamT = null;
+  if (u.exit == null) {
+    // far end of a long field, or the nearer flank of a short one, whichever puts the hero behind
+    const ez = ARENA.z1 - u.z, ex = Math.min(u.x - ARENA.x0, ARENA.x1 - u.x);
+    u.exit = ARENA.z1 > 90 || ez < ex ? [clamp(u.x + (u.x - PL.x) * 0.3, ARENA.x0 + 2, ARENA.x1 - 2), ARENA.z1 + 5] : [u.x < 0 ? ARENA.x0 - 5 : ARENA.x1 + 5, u.z + rand(-6, 6)];
+  }
+  const tx = u.exit[0], tz = u.exit[1], spd = u.speed * (cav ? 1.06 : 1.2) * (u.stun > 0 ? 0.5 : 1);
+  let mv;
+  if (cav) { turnToward(u, tx, tz, 3 * dt); u.spd = damp(u.spd || 0, spd, 2.5, dt); u.x += Math.sin(u.face) * u.spd * dt; u.z += Math.cos(u.face) * u.spd * dt; mv = u.spd; rig.armR.r[0] = damp(rig.armR.r[0], -0.5, 6, dt); }
+  else mv = steer(u, tx, tz, spd, dt);
+  const edge = Math.min(u.x - ARENA.x0, ARENA.x1 - u.x, ARENA.z1 - u.z, u.z - ARENA.z0);
+  u.fadeK = clamp((edge - 0.6) / 7, 0, 1);
+  if (edge < 0.8) { u.dead = u.gone = u.fled = true; scene.remove(rig.root); }
+  return mv;
+}
 function ramAI(u, dt) {
   const rig = u.rig, tz = GATE.z + 1.0 + u.r;
   if (u.z > tz + 0.1) { u.z -= u.speed * dt * (u.stun > 0 ? 0.5 : 1); u.x = damp(u.x, 0, 0.4, dt); u.face = PI; rig.body.p[1] = Math.abs(Math.sin(gtime * 3)) * 0.04; return u.speed; }
@@ -5656,7 +5957,7 @@ function updateEnemy(u, dt) {
   u.flash = Math.max(0, u.flash - dt * 7); const f = u.flash * 0.32; u.emis[0] = f; u.emis[1] = f * 0.8; u.emis[2] = f * 0.6;
   u.x += u.kbx * dt; u.z += u.kbz * dt; const kd = Math.exp(-7 * dt); u.kbx *= kd; u.kbz *= kd;
   u.atkCd -= dt; u.slamCd -= dt; u.flinch = Math.max(0, u.flinch - dt * 5); if (u.parried > 0) u.parried -= dt;
-  if (u.entering) {
+  if (u.entering && !u.flee) {
     const tx = u.ent ? u.x - u.ent * 4 : u.x, tz = u.ent ? u.z : u.z - 4;
     const mv = u.def.ram ? (u.z -= u.speed * dt, u.face = PI, u.speed) : steer(u, tx, tz, u.speed * (u.def.cav ? 0.55 : 1), dt);
     if (u.def.cav) u.spd = mv;
@@ -5664,11 +5965,12 @@ function updateEnemy(u, dt) {
     u.y = groundH(u.x, u.z); animUnit(u, mv, dt); return;
   }
   let mv = 0;
-  if (u.stun > 0 && !u.def.cav) { u.stun -= dt; u.lean = damp(u.lean, 0.3, 12, dt); u.atkT = -1; if (u.slamT != null) u.slamT = null; }
+  if (u.flee) { if (u.stun > 0) u.stun -= dt; u.lean = damp(u.lean, 0, 8, dt); mv = fleeAI(u, dt); if (u.gone) return; }
+  else if (u.stun > 0 && !u.def.cav) { u.stun -= dt; u.lean = damp(u.lean, 0.3, 12, dt); u.atkT = -1; if (u.slamT != null) u.slamT = null; }
   else {
     if (u.stun > 0) u.stun -= dt;
     u.lean = damp(u.lean, 0, 8, dt);
-    mv = u.def.ram ? ramAI(u, dt) : u.def.duel ? duelAI(u, dt) : u.def.cav ? cavAI(u, dt) : u.def.ranged ? archerAI(u, dt) : meleeAI(u, dt);
+    mv = u.def.ram ? ramAI(u, dt) : u.def.hark ? harkAI(u, dt) : u.def.duel ? duelAI(u, dt) : u.def.cav ? cavAI(u, dt) : u.def.ranged ? archerAI(u, dt) : meleeAI(u, dt);
   }
   if (rig.kind === 'human') rig.chest.r[0] = u.lean - u.flinch * 0.42;
   u.x = clamp(u.x, ARENA.x0 - 0.5, ARENA.x1 + 0.5); u.z = clamp(u.z, Math.max(ARENA.z0 - 3, GATE.z + 0.9 + u.r * 0.6), ARENA.z1 + 0.5);
@@ -5685,7 +5987,23 @@ function animUnit(u, mv, dt) {
   } else if (rig.kind === 'horse') poseHorse(rig, dt, mv, 0);
   rig.root.at(u.x, u.y, u.z); rig.root.r[1] = u.face;
 }
+/* taken alive: the sword goes down into the grass and he sinks onto one knee, head bowed, and stays there */
+function kneelAnim(u, dt) {
+  const rig = u.rig, d = (a, i, v, k = 5) => { a.r[i] = damp(a.r[i], v, k, dt); };
+  u.x += u.kbx * dt; u.z += u.kbz * dt; u.kbx *= 0.9; u.kbz *= 0.9;
+  if (rig.wpn && rig.wpn.vis && u.deadT > 0.3) {
+    rig.wpn.vis = false; AU.clang();
+    const s = new Node(MODELS.bigKilij), fx = Math.sin(u.face), fz = Math.cos(u.face), x = u.x + fx * 1.2 + fz * 0.4, z = u.z + fz * 1.2 - fx * 0.4;
+    s.at(x, groundH(x, z) + 0.03, z); s.r = [PI / 2, u.face + 0.5, PI / 2]; s.s = [1.2, 1.2, 1.2]; scene.add(s); MS.props.push(s);
+  }
+  d(rig.legL, 0, -1.45); d(rig.shinL, 0, 1.5); d(rig.legR, 0, 0.12); d(rig.shinR, 0, 1.55);
+  rig.body.p[1] = damp(rig.body.p[1], rig.hip - 0.45, 5, dt);
+  d(rig.chest, 0, 0.3, 3); d(rig.head, 0, 0.42, 3); d(rig.chest, 1, 0); d(rig.head, 1, 0, 3);
+  d(rig.armR, 0, -0.15); d(rig.armR, 1, 0); d(rig.foreR, 0, -0.35); d(rig.armL, 0, -0.1); d(rig.foreL, 0, -0.3);
+  u.y = groundH(u.x, u.z); rig.root.at(u.x, u.y, u.z); rig.root.r[1] = u.face; rig.root.r[0] = 0;
+}
 function deadAnim(u, dt) {
+  if (u.surrender) { u.deadT += dt; return kneelAnim(u, dt); }
   u.deadT += dt; const k0 = Math.min(1, u.deadT / 0.5), k = k0 < 1 ? 1 - Math.pow(1 - k0, 3) : 1, rig = u.rig;
   const bounce = u.deadT > 0.5 && u.deadT < 0.75 ? Math.sin((u.deadT - 0.5) / 0.25 * PI) * 0.06 : 0;
   if (u.fallYaw != null && rig.kind === 'human') { u.face += angDiff(u.face, u.fallYaw) * Math.min(1, dt * 12); rig.root.r[1] = u.face; }
@@ -5745,7 +6063,10 @@ function updateSlams(dt) {
     if (s.t >= s.dur) {
       if (PL.alive && Math.hypot(PL.x - s.x, PL.z - s.z) < s.r + 0.6) hurtPlayer(s.dmg, s.x, s.z, 'slam');
       for (const a of G.units) if (a.team === 0 && !a.dead && Math.hypot(a.x - s.x, a.z - s.z) < s.r) hurtUnit(a, s.dmg, a.x - s.x, a.z - s.z, 8, 0.6, true);
-      AU.thud(); shake(0.45); dust(s.x, s.z, 22, 2.2);
+      // a bombard's ball makes no distinction: the Sultan's own men under it are thrown down too
+      if (s.foes) { HIT.src = 'gun'; for (const u of G.units) if (u.team === 1 && !u.dead && Math.hypot(u.x - s.x, u.z - s.z) < s.r) hurtUnit(u, s.dmg * 2.5, u.x - s.x, u.z - s.z, 9, 0.8, true); HIT.src = ''; }
+      if (!s.ball) { AU.thud(); shake(0.45); }
+      dust(s.x, s.z, 22, 2.2);
       for (let k = 0; k < 18; k++) { const a = k / 18 * TAU; psN.emit(s.x + Math.cos(a) * s.r * 0.7, groundH(s.x, s.z) + 0.3, s.z + Math.sin(a) * s.r * 0.7, Math.cos(a) * 4, 1.2, Math.sin(a) * 4, 0.8, 0.9, 2.6, DUST, 0.45, -0.1, 2); }
       G.slams.splice(i, 1);
     }
@@ -5761,7 +6082,7 @@ function updateGarrison(dt) {
 }
 function buildQueue(w) {
   const d = waveDef(w), q = [];
-  for (const k of ['azap', 'jan', 'archer', 'sipahi']) for (let i = 0; i < (d[k] || 0); i++) q.push(k);
+  for (const k of ['azap', 'jan', 'archer', 'sipahi', 'akinxhi']) for (let i = 0; i < (d[k] || 0); i++) q.push(k);
   for (let i = q.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [q[i], q[j]] = [q[j], q[i]]; }
   for (let i = 0; i < (d.ram || 0); i++) q.splice(Math.floor(q.length * (0.2 + i * 0.35)), 0, 'ram');
   if (d.agha) q.splice(Math.floor(q.length * 0.35), 0, 'agha');
@@ -5815,33 +6136,118 @@ function chooseUpgrade(up) {
   hideScreens(); G.state = 'play'; G.between = 2.2;
 }
 /* ===== Campaign: missions, objectives, stars, progress ===== */
-const MS = { cur: null, obj: [], phase: 0, t: 0, q: [], spawnT: 0, deco: [], boss: null, prompt: null, alarmT: 0, reinT: 0, dirty: true, stars: null };
-const ARENA0 = { x0: -46, x1: 46, z0: -26.6, z1: 66 };
+const MS = { cur: null, obj: [], phase: 0, t: 0, q: [], spawnT: 0, deco: [], boss: null, prompt: null, promptT: '', alarmT: 0, reinT: 0, dirty: true, stars: null, props: [], craters: [], fires: [], hold: 0, winT: 0 };
+const ARENA0 = { x0: -46, x1: 46, z0: -26.6, z1: 66 }, ARENA_WIDE = { x0: -80, x1: 80, z0: -26.6, z1: 146 };
 const rep = (k, n) => Array.from({ length: n }, () => k);
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const PROG = { get() { return store.get('prog', {}); }, stars(id) { return this.get()[id] || 0; }, save(id, n) { const p = this.get(); if ((p[id] || 0) < n) { p[id] = n; store.set('prog', p); } } };
 
-/* objectives */
-function setObj(list) { MS.obj = list.map(([k, goal, hidden]) => ({ k, goal: goal || 0, n: 0, done: false, hidden: !!hidden })); MS.dirty = true; }
+/* objectives: [key, goal, hidden, shown as a percentage] */
+function setObj(list) { MS.obj = list.map(([k, goal, hidden, pct]) => ({ k, goal: goal || 0, n: 0, done: false, hidden: !!hidden, pct: !!pct })); MS.dirty = true; }
 function objAdd(i, d = 1) { const o = MS.obj[i]; if (!o || o.done) return; o.n = Math.min(o.goal, o.n + d); if (o.goal && o.n >= o.goal) objDone(i); MS.dirty = true; }
 function objDone(i) { const o = MS.obj[i]; if (!o || o.done) return; o.done = true; o.n = o.goal; o.hidden = false; AU.pick(); MS.dirty = true; }
 function objShow(i) { const o = MS.obj[i]; if (o && o.hidden) { o.hidden = false; MS.dirty = true; } }
 function alliesAlive() { let n = 0; for (const u of G.units) if (u.team === 0 && !u.dead && u.perm) n++; return n; }
-function spawnFromQueue(dt, pos) {
+function foesAlive() { let n = 0; for (const u of G.units) if (u.team === 1 && !u.dead) n++; return n; }
+function spawnFromQueue(dt, pos, cap = CAP, gap = [0.55, 1.15]) {
   if (!MS.q.length) return;
   MS.spawnT -= dt; if (MS.spawnT > 0) return;
-  let alive = 0; for (const u of G.units) if (u.team === 1 && !u.dead) alive++;
-  if (alive >= CAP) return;
-  const ty = MS.q.shift(), p = pos(ty); spawnEnemy(ty, p); MS.spawnT = rand(0.55, 1.15);
+  if (foesAlive() >= cap) return;
+  const ty = MS.q.shift(), p = pos(ty); spawnEnemy(ty, p); MS.spawnT = rand(gap[0], gap[1]);
 }
 function missionKill(u) { if (MS.cur && MS.cur.onKill) MS.cur.onKill(u); }
 function missionEvent(name, a) { if (MS.cur && MS.cur.onEvent) MS.cur.onEvent(name, a); }
 function missionWin() { if (G.state === 'play') endGame(true); }
+/* a scenery piece that belongs to one battle (fires, a dropped sword); cleared with the field */
+function addProp(mesh, x, y, z, ry) { const n = new Node(mesh); n.at(x, y, z); n.r[1] = ry || 0; scene.add(n); MS.props.push(n); return n; }
+/* a hint for a new thing as it first comes up: twice per player, then they know it */
+function hintOk(k) { if (!SET.hints) return false; const seen = store.get('hintsSeen', {}); if ((seen[k] || 0) >= 2) return false; seen[k] = (seen[k] || 0) + 1; store.set('hintsSeen', seen); return true; }
+function hintNow(k, dur = 6) { if (G.state === 'play' && hintOk(k)) HINTS.list.unshift([HINTS.t + 0.4, k, dur]); }
+/* a camp at rest wakes: every sentry takes up his arms */
+function wakeGuards(near) {
+  for (const u of G.units) if (u.guard && (!near || Math.hypot(u.x - PL.x, u.z - PL.z) < near)) { u.guard = false; u.atkCd = rand(0.2, 1); }
+}
+/* the enemy breaks: every man still standing runs for the edge of the field */
+function routAll() { for (const u of G.units) if (u.team === 1 && !u.dead) { u.flee = true; u.guard = false; } MS.q.length = 0; }
+/* fires of one battle: [x, y, z, size] on the ground or in a basket on a pole */
+function battleFires() {
+  for (let i = 0; i < MS.fires.length; i++) {
+    const p = MS.fires[i], s = p[3];
+    for (let k = 0; k < 4; k++) { const a = k * 1.57 + i, r = k ? .2 * s : 0; FLAMES.add(p[0] + Math.cos(a) * r, p[1], p[2] + Math.sin(a) * r, (k ? .5 : .7) * s, (k ? .8 + .14 * (k % 3) : 1.35) * s, 7 + i * .37 + k * .31, k ? 6 : 7); }
+    if (Math.random() < 0.12) psA.emit(p[0], p[1] + 0.5, p[2], rand(-.5, .5), rand(1.8, 3.4), rand(-.5, .5), rand(1, 2), 0.16, 0.06, [5, 2, .5], 1, 0.2, 0.3);
+    if (Math.random() < 0.1) psN.emit(p[0], p[1] + 1.2, p[2], rand(-.2, .2) + .3, rand(1, 1.6), rand(-.2, .2), rand(3, 4.5), 0.8, 4, [0.03, 0.028, 0.026], 0.3, -0.1, 0.3);
+    if (Math.hypot(p[0] - CAM.tgt[0], p[2] - CAM.tgt[2]) < 45) PLIGHTS.push({ x: p[0], y: p[1] + 0.8, z: p[2], r: 13, c: [1, 0.5, 0.2], i: 2.5 + Math.sin(gtime * 13 + i * 2) * 0.3 + Math.random() * 0.2 });
+  }
+}
 
+const FLAG_ZONE = { x: 0, z: -23.2, r: 6.5 };
 const MISSIONS = [
+  /* 28 November 1443: home from Niš, the hero and his men fall on the Ottoman garrison before the gate of Krujë by night,
+     hold the gate against the troops sent to retake it and raise the Kastrioti flag over the castle */
+  {
+    id: 'flamuri', year: 1443, tod: 'dusk', wx: 'rain', arena: ARENA0, gate: false, objs: ['oGarrison', 'oFlag'],
+    setup() {
+      setObj([['oGarrison', 14], ['oFlag', 100, true, true]]);
+      resetHero(30); PL.face = PI; MS.hold = 0; MS.winT = 0; G.alarm = false;
+      setCastleFlags('otto');
+      for (let i = 0; i < 8; i++) spawnAlly(-10 + i * 2.8 + rand(-0.5, 0.5), 34 + rand(-1.5, 1.5), { perm: true, face: PI });
+      // the garrison at rest: two knots of men round fires on the road, a watch before the gate
+      const pits = [[-9, -12], [10, -5]];
+      for (const [cx, cz] of pits) for (let k = 0; k < 5; k++) {
+        const a = k / 5 * TAU + rand(-0.3, 0.3), r = rand(1.9, 2.6), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+        spawnEnemy(k === 0 ? 'jan' : 'azap', { x, z, guard: true, entering: false, face: Math.atan2(cx - x, cz - z) });
+      }
+      for (const x of [-3, 3]) spawnEnemy('jan', { x, z: -22.5, guard: true, entering: false, face: 0 });
+      for (const x of [-8, 8]) spawnEnemy('archer', { x, z: -21.5, guard: true, entering: false, face: 0 });
+      MS.fires = [];
+      for (const [x, z] of pits) { const y = groundH(x, z); addProp(MODELS.firepit, x, y, z, rand(0, TAU)); MS.fires.push([x, y + 0.1, z, 1]); }
+      for (const x of [-5.6, 5.6]) { const z = -25.7, y = groundH(x, z); addProp(MODELS.brazier, x, y, z); MS.fires.push([x, y + 2.45, z, 0.8]); }
+    },
+    fx() { battleFires(); },
+    update(dt) {
+      if (MS.phase === 0 && MS.obj[0].done) {
+        // the troops of the nearby garrisons come to take the gate back, along the walls and down the valley
+        MS.phase = 1; objShow(1); wakeGuards(); banner(t('toGate'), t('toGateSub'), false); AU.horn(true); hintNow('hintFlag', 6);
+        MS.q = shuffle([...rep('azap', 12), ...rep('jan', 10), ...rep('archer', 5)]); MS.q.splice(8, 0, 'sipahi'); MS.q.splice(16, 0, 'sipahi'); MS.spawnT = 2.5;
+        for (let i = 0; i < 4; i++) spawnEnemy(i < 3 ? 'azap' : 'jan', { x: (i % 2 ? 1 : -1) * rand(26, 34), z: rand(14, 26), entering: false, face: PI }); // the first of them are already close
+      }
+      if (MS.phase === 1) {
+        spawnFromQueue(dt, ty => { const s = pick([-1, 1]); return ty === 'sipahi' ? { x: rand(-24, 24), z: 70 } : { x: s * 52, z: rand(-12, 26), ent: s }; }, 14, [0.9, 1.9]);
+        const Z = FLAG_ZONE, inZ = PL.alive && Math.hypot(PL.x - Z.x, PL.z - Z.z) < Z.r;
+        let foes = 0; for (const u of G.units) if (u.team === 1 && !u.dead && Math.hypot(u.x - Z.x, u.z - Z.z) < Z.r + 1.2) foes++;
+        if (inZ && !foes) MS.hold = Math.min(1, MS.hold + dt / 34);
+        const pc = Math.floor(MS.hold * 100); if (MS.obj[1].n !== pc) { MS.obj[1].n = pc; MS.dirty = true; }
+        setCastleFlags('raise', MS.hold);
+        MS.prompt = { x: Z.x, y: groundH(Z.x, Z.z) + 0.6, z: Z.z, burn: MS.hold, kind: 'flag' };
+        MS.promptT = foes && inZ ? t('flagHeld') : inZ ? t('flagRising') : t('flagGo');
+        if (MS.hold >= 1) {
+          // the lens leaves the fight and looks up at the gate as the eagle goes up over it
+          MS.camShot = { eye: [clamp(PL.x, -12, 12) * 0.3 + 8.5, groundH(8.5, -4) + 3.4, -4], tgt: [0, 13.2, -30] };
+          MS.phase = 2; MS.winT = 4.4; MS.prompt = null; objDone(1); setCastleFlags('eagle'); HINTS.list.length = 0; HINTS.cur = 0.001;
+          banner(t('flagUp'), t('flagUpSub'), false); AU.fanfare(); AU.horn(true); flash(0.2, [1, 0.85, 0.55]); shake(0.3); punch(0.6);
+          for (const f of CFLAGS) if (f.gate) burst(f.nd.p[0] + 1.5, f.top - 0.8, f.nd.p[2], 30, GOLD, 5, 0.3, 1.1);
+          routAll();
+        }
+      }
+      if (MS.phase === 2) { MS.winT -= dt; if (MS.winT <= 0) missionWin(); }
+    },
+    onKill(u) {
+      if (u.guard && !G.alarm) setTimeout(() => missionEvent('spotted'), 900); // a death cry wakes the rest
+      if (MS.phase === 0) objAdd(0);
+    },
+    onEvent(n) { if (n === 'spotted' && !G.alarm && MS.phase === 0 && G.state === 'play') { G.alarm = true; wakeGuards(); AU.horn(false); banner(t('garrison'), t('garrisonSub'), false); } },
+    decals() {
+      if (MS.phase !== 1) return;
+      const Z = FLAG_ZONE, y = decalY(Z.x, Z.z, Z.r) + 0.03, p = 0.5 + 0.5 * Math.sin(gtime * 2.4), k = ENV.night ? 0.4 : 1;
+      fxA.ring(Z.x, Z.z, y, Z.r, 1.9, 1.3, 0.45, (0.3 + p * 0.16) * k, gtime * 0.25);
+      fxA.disc(Z.x, Z.z, y - 0.005, Z.r * (0.15 + 0.85 * MS.hold), 2.0, 1.4, 0.5, 0.2 * k, 4);
+    },
+    toGate() { return MS.phase === 1 && Math.hypot(PL.x - FLAG_ZONE.x, PL.z - FLAG_ZONE.z) > FLAG_ZONE.r + 3; },
+    stars: [() => true, () => PL.hp / PL.maxHp >= 0.5, () => alliesAlive() >= 4]
+  },
   /* 1444: Ali Pasha's army is drawn into the Torvioll valley, then the hidden highlanders strike from the woods */
   {
-    id: 'torvioll', year: 1444, tod: 'dawn', arena: ARENA0, gate: false,
+    id: 'torvioll', year: 1444, tod: 'dawn', arena: ARENA0, gate: false, objs: ['oVanguard', 'oAmbush', 'oAli'],
     setup() {
       setObj([['oVanguard', 16], ['oAmbush', 28, true], ['oAli', 1, true]]);
       resetHero(-12);
@@ -5869,7 +6275,7 @@ const MISSIONS = [
   },
   /* 1450: the first siege of Krujë, ten waves against the gate */
   {
-    id: 'kruja', year: 1450, tod: 'day', arena: ARENA0, gate: true, waves: true, upgrades: true,
+    id: 'kruja', year: 1450, tod: 'day', arena: ARENA0, gate: true, waves: true, upgrades: true, objs: ['oWaves', 'oGate'],
     setup() { setObj([['oWaves', 10], ['oGate', 0]]); resetHero(-17); G.wave = 0; nextWave(); },
     update(dt) { updateWaves(dt); },
     onEvent(n, a) { if (n === 'waveHeld') { MS.obj[0].n = a; MS.dirty = true; if (a >= 10) objDone(0); } },
@@ -5877,7 +6283,7 @@ const MISSIONS = [
   },
   /* 1450: a night sortie with a torch to burn the siege engines in the Ottoman camp */
   {
-    id: 'raid', year: 1450, tod: 'night', arena: { x0: -80, x1: 80, z0: -26.6, z1: 146 }, gate: false,
+    id: 'raid', year: 1450, tod: 'night', arena: ARENA_WIDE, gate: false, wide: true, objs: ['oBurn', 'oReturn'], toGate() { return MS.phase === 1; },
     setup() {
       setObj([['oBurn', SIEGE.length], ['oReturn', 0, true]]);
       resetHero(-20); G.alarm = false; MS.alarmT = 0; MS.reinT = 8;
@@ -5910,9 +6316,63 @@ const MISSIONS = [
     onEvent(n) { if (n === 'spotted' && !G.alarm && G.state === 'play') raiseAlarm(); },
     stars: [() => true, () => MS.t < 240, () => PL.hp / PL.maxHp >= 0.5]
   },
+  /* 2 September 1457: Isak Bey and Hamza Kastrioti camp at Albulena believing the Albanian army scattered in the mountains;
+     out of the morning mist it falls on the camp, takes Hamza alive and drives Isak Bey from the field */
+  {
+    id: 'albulena', year: 1457, tod: 'dawn', wx: 'mist', arena: ARENA_WIDE, gate: false, wide: true, objs: ['oCamp', 'oHamza', 'oIsak'],
+    setup() {
+      setObj([['oCamp', 20], ['oHamza', 1, true], ['oIsak', 1, true]]);
+      const z0 = 60; resetHero(z0); PL.x = roadX(z0); G.alarm = false; MS.alarmT = 0; MS.reinT = 5; MS.reinN = 0; MS.isakT = 0; MS.winT = 0;
+      for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; spawnAlly(PL.x + Math.cos(a) * rand(3, 6.5), z0 - 4 + Math.sin(a) * rand(2, 4), { perm: true, free: true, face: 0 }); }
+      // the camp at rest: sentries by the tents and the fires, half asleep in the mist
+      const spots = shuffle(CAMP_SPOTS.filter(p => Math.abs(p[0]) < 70)).slice(0, 22);
+      for (const [x, z] of spots) spawnEnemy(pick(['azap', 'azap', 'jan', 'jan', 'archer']), { x: x + rand(-1.2, 1.2), z: z + rand(-1.2, 1.2), guard: true, entering: false, face: rand(0, TAU) });
+    },
+    update(dt) {
+      if (G.alarm && MS.phase < 3) {
+        MS.alarmT += dt; MS.reinT -= dt;
+        if (MS.reinT <= 0 && MS.reinN < 24 && foesAlive() < 16) {
+          MS.reinT = rand(2.4, 4.2); MS.reinN++;
+          const sp = CAMP_SPOTS.filter(p => Math.hypot(p[0] - PL.x, p[1] - PL.z) > 26 && Math.abs(p[0]) < 72), p = sp.length ? pick(sp) : pick(CAMP_SPOTS);
+          spawnEnemy(pick(['jan', 'azap', 'jan', 'archer']), { x: p[0] + rand(-2, 2), z: p[1] + rand(-2, 2), entering: false, face: rand(0, TAU) });
+        }
+      }
+      if (MS.phase === 0 && MS.obj[0].done) {
+        // out of the great pavilion comes the hero's own nephew with the Sultan's janissaries
+        MS.phase = 1; objShow(1); if (!G.alarm) raiseAlarm();
+        MS.boss = spawnEnemy('hamza', { x: 0.6, z: 123.6, entering: false, face: PI, sub: t('hamzaSub') });
+        for (let i = 0; i < 6; i++) spawnEnemy('jan', { x: rand(-8, 8), z: rand(117, 123), entering: false, face: PI });
+      }
+      if (MS.phase === 2 && MS.isakT > 0) {
+        MS.isakT -= dt;
+        if (MS.isakT <= 0) {
+          MS.boss = spawnEnemy('isak', { x: 0, z: 141, entering: false, face: PI, sub: t('isakSub') });
+          for (let i = 0; i < 4; i++) spawnEnemy('sipahi', { x: (i % 2 ? 1 : -1) * rand(8, 22), z: rand(136, 143), entering: false, face: PI });
+          for (let i = 0; i < 3; i++) spawnEnemy('akinxhi', { x: (i % 2 ? 1 : -1) * rand(30, 50), z: rand(128, 140), entering: false, face: PI });
+        }
+      }
+      if (MS.phase === 3) { MS.winT -= dt; if (MS.winT <= 0 || (MS.winT < 4.5 && !foesAlive())) missionWin(); }
+    },
+    onKill(u) {
+      if (u.guard && !G.alarm) setTimeout(() => missionEvent('spotted'), 1200);
+      if (u.type === 'hamza') { objDone(1); objShow(2); MS.phase = 2; MS.isakT = 3.5; MS.boss = null; banner(t('hamzaTaken'), t('isakComes'), false); AU.horn(true); return; }
+      if (u.type === 'isak') { if (MS.phase < 3) this.rout(); return; }
+      if (MS.phase === 0) objAdd(0);
+    },
+    onEvent(n, u) {
+      if (n === 'spotted' && !G.alarm && G.state === 'play') {
+        raiseAlarm(); hintNow('hintHark', 6.5);
+        // the camp's horse archers ride out from both flanks
+        for (let i = 0; i < 4; i++) spawnEnemy('akinxhi', { x: (i % 2 ? 1 : -1) * rand(48, 64), z: rand(112, 136), entering: false, face: PI });
+      }
+      if (n === 'flee' && u && u.type === 'isak' && MS.phase < 3) this.rout();
+    },
+    rout() { objDone(2); MS.phase = 3; MS.winT = 7; banner(t('rout'), t('routSub'), false); AU.fanfare(); AU.horn(true); routAll(); },
+    stars: [() => true, () => PL.hp / PL.maxHp >= 0.5, () => MS.t < 360]
+  },
   /* 1465: Ballaban Badera rides out to settle it in single combat while both armies watch */
   {
-    id: 'duel', year: 1465, tod: 'dusk', arena: { x0: -40, x1: 40, z0: -14, z1: 50 }, gate: false,
+    id: 'duel', year: 1465, tod: 'dusk', arena: { x0: -40, x1: 40, z0: -14, z1: 50 }, gate: false, objs: ['oBallaban'],
     setup() {
       setObj([['oBallaban', 1]]);
       resetHero(-4);
@@ -5930,11 +6390,47 @@ const MISSIONS = [
     onKill(u) { if (u.type === 'ballaban') { objDone(0); for (const d of MS.deco) d.cheer = 3; missionWin(); } else if (u.team === 1) for (const d of MS.deco) if (d.team === 0) d.cheer = 1.2; },
     onEvent(n) { if (n === 'parry' || n === 'heavy') for (const d of MS.deco) if (d.team === 0) d.cheer = 1; },
     stars: [() => true, () => PL.hp / PL.maxHp >= 0.5, () => (G.parries || 0) >= 3]
+  },
+  /* 1466: Sultan Mehmed II himself before Krujë, his great bombards pounding the walls from across the river. Through the storm
+     the hero rides out to blow them up one by one while the highlanders hold the gate, then breaks the last assault */
+  {
+    id: 'kruja2', year: 1466, tod: 'dusk', wx: 'storm', arena: ARENA_WIDE, gate: true, wide: true, gateK: 0.65, objs: ['oGuns', 'oLast', 'oGate'],
+    setup() {
+      setObj([['oGuns', 4], ['oLast', 0, true], ['oGate', 0]]);
+      resetHero(-17); MS.gunsT = 0; MS.refills = 0; G.alarm = false;
+      for (let i = 0; i < 6; i++) { const a = spawnAlly(-7.5 + i * 3 + rand(-0.4, 0.4), -21 + rand(-0.8, 0.8), { perm: true, hold: true, face: 0 }); a.holdFace = 0; }
+      bombardsOn({ first: 5, gap: 3.1, period: [10, 14], wall: 10, field: 0.32 });
+      // each gun has its crew: a gunner and two janissaries resting behind it
+      for (const g of BOMB.guns) { const e = g.e; for (let k = 0; k < 3; k++) spawnEnemy(k ? 'jan' : 'azap', { x: e.x + rand(-3, 3), z: e.z + rand(2.6, 4.6), guard: true, entering: false, face: e.ry + rand(-0.8, 0.8) }); }
+      MS.q = shuffle([...rep('azap', 9), ...rep('jan', 7), ...rep('archer', 5), ...rep('akinxhi', 2)]); MS.q.splice(8, 0, 'ram'); MS.spawnT = 7;
+    },
+    hints: [[4.5, 'hintGuns', 7]],
+    update(dt) {
+      spawnFromQueue(dt, () => ({}), 11, MS.phase ? [1.2, 2.2] : [2.6, 4.2]);
+      if (MS.phase === 0) {
+        MS.gunsT += dt;
+        if (!MS.q.length && MS.refills < 4) { MS.refills++; MS.q = shuffle([...rep('azap', 5), ...rep('jan', 4), ...rep('archer', 3), 'akinxhi']); }
+        // at a gun the powder is laid and lit, and it goes up
+        MS.prompt = null;
+        for (const g of BOMB.guns) {
+          const e = g.e; if (e.fire > 0) continue;
+          const d = Math.hypot(PL.x - e.x, PL.z - e.z) - e.r;
+          if (d < 2.6 && PL.alive) { e.burn += dt / 1.5; MS.prompt = e; MS.promptT = t('spiking'); if (e.burn >= 1) blowGun(g); }
+          else e.burn = Math.max(0, e.burn - dt * 0.5);
+        }
+        if (MS.obj[0].done) {
+          MS.phase = 1; objShow(1); MS.prompt = null; wakeGuards(); banner(t('gunsAll'), t('gunsAllSub'), false); AU.horn(false);
+          MS.q = shuffle([...rep('jan', 9), ...rep('azap', 6), ...rep('archer', 4), ...rep('sipahi', 2), ...rep('akinxhi', 2)]); MS.q.splice(6, 0, 'ram'); MS.q.splice(11, 0, 'agha'); MS.spawnT = 3;
+        }
+      } else if (MS.phase === 1 && !MS.q.length && !foesAlive()) { MS.phase = 2; objDone(1); missionWin(); }
+    },
+    onEvent(n) { if (n === 'spotted') wakeGuards(22); },
+    stars: [() => true, () => G.gateHp / G.gateMax >= 0.5, () => MS.gunsT < 240]
   }
 ];
 /* endless defence: the Krujë waves and then generated ones, for a record */
 const ENDLESS = {
-  id: 'endless', tod: 'day', arena: ARENA0, gate: true, waves: true, upgrades: true, endless: true,
+  id: 'endless', tod: 'day', arena: ARENA0, gate: true, waves: true, upgrades: true, endless: true, objs: ['oSurvive'],
   setup() { setObj([['oSurvive', 0]]); resetHero(-17); G.wave = 0; nextWave(); },
   update(dt) { updateWaves(dt); },
   onEvent(n, a) { if (n === 'waveHeld') { MS.obj[0].n = a; MS.dirty = true; } },
@@ -5942,7 +6438,7 @@ const ENDLESS = {
 };
 function waveDef(w) {
   const k = w - WAVES.length;
-  const d = w <= WAVES.length ? WAVES[w - 1] : { azap: 8 + k, jan: 10 + k, archer: 8 + (k >> 1), sipahi: 4 + (k >> 1), ram: k % 2 ? 1 : 2, flank: 1, agha: k % 3 === 0 ? 1 : 0, pasha: k % 5 === 0 ? 1 : 0 };
+  const d = w <= WAVES.length ? WAVES[w - 1] : { azap: 8 + k, jan: 10 + k, archer: 8 + (k >> 1), sipahi: 4 + (k >> 1), akinxhi: 1 + (k >> 2), ram: k % 2 ? 1 : 2, flank: 1, agha: k % 3 === 0 ? 1 : 0, pasha: k % 5 === 0 ? 1 : 0 };
   return G.dmods && G.dmods.length ? dailyWave(d, w) : d; // the daily challenge bends the waves to its rules
 }
 G.waveDef = waveDef;
@@ -5967,11 +6463,106 @@ function raiseAlarm() {
 function guardIdle(u, dt) {
   u.face += Math.sin(gtime * 0.35 + u.walkPh) * dt * 0.5;
   if (PL.alive && G.state === 'play') {
-    const dx = PL.x - u.x, dz = PL.z - u.z, d = Math.hypot(dx, dz), seen = d < 9 || (d < 17 && (dx * Math.sin(u.face) + dz * Math.cos(u.face)) / d > 0.55);
+    const vis = WX.kind === 'mist' ? 0.62 : WX.rain > 0.5 ? 0.8 : 1; // fog and rain hide a rider until he is close
+    const dx = PL.x - u.x, dz = PL.z - u.z, d = Math.hypot(dx, dz), seen = d < 9 * vis || (d < 17 * vis && (dx * Math.sin(u.face) + dz * Math.cos(u.face)) / d > 0.55);
     u.alertT = seen ? (u.alertT || 0) + dt * (PL.spd > 6 ? 1.6 : 1) : Math.max(0, (u.alertT || 0) - dt);
     if (u.alertT > 0.9) { missionEvent('spotted'); popNum(u.x, u.y + 2.6, u.z, '!', 'bad'); }
   }
   return 0;
+}
+/* ---- the Sultan's bombards: stone balls lobbed across the river at the walls of Krujë, or at the hero out in the field ---- */
+const BOMB = { on: false, guns: [], balls: [], hits: [], wall: 0, field: 0, period: [10, 14], fieldDmg: 24, onlyField: false };
+function bombardsOn(o) {
+  bombardsOff(); BOMB.on = true;
+  Object.assign(BOMB, { wall: o.wall || 0, field: o.field || 0, period: o.period || [10, 14], fieldDmg: o.fieldDmg || 24, onlyField: !!o.onlyField });
+  BOMB.guns = SIEGE.filter(e => e.kind === 'bombard').map((e, i) => ({ e, t: (o.first || 5) + i * (o.gap || 3), flash: 0, rec: 0 }));
+}
+function bombardsOff() {
+  for (const b of BOMB.balls) scene.remove(b.node); BOMB.balls.length = 0; BOMB.hits.length = 0;
+  for (const g of BOMB.guns) { g.e.node.p[0] = g.e.x; g.e.node.p[2] = g.e.z; } BOMB.guns.length = 0; BOMB.on = false;
+}
+const gunMuzzle = e => [e.x + Math.sin(e.ry) * 1.75, e.y + 1.12, e.z + Math.cos(e.ry) * 1.75];
+const skyGrey = k => { const s = (ENV.sky[0] * .3 + ENV.sky[1] * .55 + ENV.sky[2] * .15) * k; return [s * .96, s * .95, s]; };
+function fireBombard(g) {
+  const e = g.e, m = gunMuzzle(e), dP = Math.hypot(PL.x - m[0], PL.z - m[2]);
+  // the mark: now and then the hero out in the field (where the ball will fall is marked on the ground), otherwise the walls by the gate
+  let tx, ty, tz, field = false;
+  if (PL.alive && dP > 22 && dP < 190 && (BOMB.onlyField || Math.random() < BOMB.field)) {
+    field = true; const T0 = clamp(dP / 50, 1.8, 3.4);
+    tx = clamp(PL.x + PL.vx * T0 * 0.55 + rand(-3, 3), ARENA.x0 + 2, ARENA.x1 - 2); tz = clamp(PL.z + PL.vz * T0 * 0.55 + rand(-3, 3), ARENA.z0 + 2, ARENA.z1 - 2); ty = groundH(tx, tz);
+  } else if (BOMB.wall && !BOMB.onlyField) { tx = rand(-9, 9); ty = rand(2.5, 7.5); tz = -29.1; }
+  else return;
+  const T = clamp(Math.hypot(tx - m[0], tz - m[2]) / 50, 1.8, 3.4);
+  const b = { p0: m, v: [(tx - m[0]) / T, (ty - m[1] + 4.9 * T * T) / T, (tz - m[2]) / T], t: 0, T, field, x: m[0], y: m[1], z: m[2], node: new Node(MODELS.ball) };
+  b.node.at(m[0], m[1], m[2]); scene.add(b.node); BOMB.balls.push(b);
+  if (field) { G.slams.push({ x: tx, z: tz, r: 3.6, t: 0, dur: T, dmg: BOMB.fieldDmg, foes: true, ball: true }); AU.whistle(T); }
+  g.flash = 1; g.rec = 1;
+  // the report: smoke rolls out of the muzzle, sparks fly, the ground shakes near it
+  const s = Math.sin(e.ry), c = Math.cos(e.ry), sm = skyGrey(1.6), dc = Math.hypot(m[0] - CAM.eye[0], m[2] - CAM.eye[2]);
+  for (let k = 0; k < 14; k++) { const v = rand(2.5, 11); psN.emit(m[0] + rand(-.3, .3), m[1] + rand(-.2, .3), m[2] + rand(-.3, .3), s * v + rand(-1.5, 1.5), rand(0.3, 2.2), c * v + rand(-1.5, 1.5), rand(3.5, 6), rand(0.8, 1.4), rand(4.5, 7.5), sm, 0.55, -0.12, 0.9); }
+  for (let k = 0; k < 12; k++) { const v = rand(6, 16); psA.emit(m[0], m[1], m[2], s * v + rand(-2, 2), rand(0.5, 3), c * v + rand(-2, 2), rand(0.3, 0.7), 0.12, 0.03, EMBER, 1, 6, 1); }
+  AU.boom(dc); if (dc < 45) shake(0.35 * (1 - dc / 45));
+}
+function updateBombards(dt) {
+  if (!BOMB.on) return;
+  for (const g of BOMB.guns) {
+    if (g.e.fire > 0) continue;
+    g.t -= dt; if (g.t <= 0) { g.t = rand(BOMB.period[0], BOMB.period[1]); fireBombard(g); }
+  }
+  for (let i = BOMB.balls.length - 1; i >= 0; i--) {
+    const b = BOMB.balls[i]; b.t = Math.min(b.T, b.t + dt); const t = b.t;
+    b.x = b.p0[0] + b.v[0] * t; b.y = b.p0[1] + b.v[1] * t - 4.9 * t * t; b.z = b.p0[2] + b.v[2] * t;
+    b.node.at(b.x, b.y, b.z); b.node.r[0] += dt * 9;
+    if (Math.random() < 0.6) psN.emit(b.x, b.y, b.z, 0, 0.2, 0, rand(0.5, 0.9), 0.14, 0.55, skyGrey(0.6), 0.35 * (1 - t / b.T * 0.6), -0.05, 0.5);
+    if (t >= b.T) { ballImpact(b); scene.remove(b.node); BOMB.balls.splice(i, 1); }
+  }
+}
+function ballImpact(b) {
+  const dc = Math.hypot(b.x - CAM.eye[0], b.z - CAM.eye[2]); AU.crash(dc);
+  if (dc < 70) shake(0.45 * (1 - dc / 70));
+  BOMB.hits.push({ x: b.x, y: b.field ? groundH(b.x, b.z) + 0.3 : b.y, z: b.field ? b.z : b.z + 0.5, t: 0.22 });
+  const dustC = skyGrey(2);
+  if (!b.field) {
+    // against the wall: sparks off the stone, shattered chips falling, a pale cloud of mortar dust rolling out; the gate takes the blow
+    burst(b.x, b.y, b.z + 0.4, 26, SPARK, 7, 0.22, 0.35);
+    for (let k = 0; k < 22; k++) psN.emit(b.x + rand(-.5, .5), b.y + rand(-.5, .5), b.z + 0.3, rand(-3.5, 3.5), rand(0.5, 4.5), rand(1, 6), rand(0.9, 1.5), 0.1, 0.14, [0.16, 0.145, 0.12], 0.95, 9, 0.4);
+    for (let k = 0; k < 12; k++) psN.emit(b.x + rand(-1, 1), b.y + rand(-1, 1), b.z + 0.8, rand(-1.8, 1.8), rand(-0.4, 1.2), rand(0.6, 3), rand(2.5, 4.5), 1.1, 5, dustC, 0.55, 0.12, 0.8);
+    damageGate(BOMB.wall, true);
+  } else {
+    // in the field: a fountain of earth, a pale burst of dust and a scorched hollow (the blast itself is the slam laid down when it was fired)
+    const y = groundH(b.x, b.z);
+    for (let k = 0; k < 26; k++) { const a = rand(0, TAU), v = rand(1, 5.5); psN.emit(b.x, y + 0.2, b.z, Math.cos(a) * v, rand(4, 10), Math.sin(a) * v, rand(0.8, 1.5), 0.13, 0.22, MUD, 0.95, 9.8, 0.3); }
+    for (let k = 0; k < 12; k++) { const a = rand(0, TAU), v = rand(0.5, 3); psN.emit(b.x, y + 0.5, b.z, Math.cos(a) * v, rand(1, 3.5), Math.sin(a) * v, rand(2, 3.5), 1.3, 5, dustC, 0.5, 0.05, 1); }
+    burst(b.x, y + 0.4, b.z, 16, EMBER, 7, 0.25, 0.45);
+    MS.craters.push([b.x, b.z, rand(1.4, 1.9)]); if (MS.craters.length > 18) MS.craters.shift();
+  }
+}
+/* muzzle flashes, recoil and the flash where a ball strikes, drawn after the frame's lights are reset */
+function bombardFx(dt) {
+  for (let i = BOMB.hits.length - 1; i >= 0; i--) {
+    const h = BOMB.hits[i], f = h.t / 0.22; h.t -= dt; if (h.t <= 0) { BOMB.hits.splice(i, 1); continue; }
+    FLAMES.add(h.x, h.y - 0.4, h.z, 2.2 * f, 1.8 * f, h.x + h.z, 7);
+    PLIGHTS.push({ x: h.x, y: h.y + 0.8, z: h.z, r: 18, c: [1, 0.6, 0.3], i: 7 * f, pri: 1 });
+  }
+  for (const g of BOMB.guns) {
+    const e = g.e;
+    if (g.rec > 0) { g.rec = Math.max(0, g.rec - dt * 1.6); const k = g.rec * g.rec * 0.45; e.node.p[0] = e.x - Math.sin(e.ry) * k; e.node.p[2] = e.z - Math.cos(e.ry) * k; }
+    if (g.flash <= 0) continue;
+    const m = gunMuzzle(e), f = g.flash; g.flash = Math.max(0, g.flash - dt * 7);
+    FLAMES.add(m[0], m[1] - 0.6 * f, m[2], 2.4 * f, 2.2 * f, e.x, 9); FLAMES.add(m[0] + Math.sin(e.ry) * 0.9, m[1] - 0.4 * f, m[2] + Math.cos(e.ry) * 0.9, 1.6 * f, 1.4 * f, e.z, 8);
+    PLIGHTS.push({ x: m[0], y: m[1] + 0.6, z: m[2], r: 30, c: [1, 0.62, 0.3], i: 9 * f, pri: 1 });
+  }
+}
+/* the hero sets a gun's own powder alight: it bursts, takes its crew with it and burns */
+function blowGun(g) {
+  const e = g.e; e.fire = 0.001; e.burn = 1; g.flash = 1.8; objAdd(0);
+  AU.boom(Math.hypot(e.x - CAM.eye[0], e.z - CAM.eye[2])); AU.thud(); shake(0.55); flash(0.14, [1, 0.75, 0.45]); punch(0.6);
+  burst(e.x, e.y + 1.2, e.z, 34, EMBER, 9, 0.35, 0.9); burst(e.x, e.y + 1.2, e.z, 16, GOLD, 6, 0.3, 0.6);
+  for (let k = 0; k < 16; k++) psN.emit(e.x + rand(-1, 1), e.y + 1 + rand(0, 1), e.z + rand(-1, 1), rand(-3, 3), rand(2, 6), rand(-3, 3), rand(3, 5), 1.2, 5.5, [0.05, 0.045, 0.04], 0.6, -0.15, 0.6);
+  dust(e.x, e.z, 20, 2.2);
+  HIT.src = 'gun'; for (const u of G.units) if (u.team === 1 && !u.dead && Math.hypot(u.x - e.x, u.z - e.z) < 5.5) hurtUnit(u, 90, u.x - e.x, u.z - e.z, 12, 1.2, true); HIT.src = '';
+  e.node.r[2] = 0.16;
+  banner(t('gunDown'), MS.obj[0].done ? '' : SQ.gunsLeft(MS.obj[0].goal - MS.obj[0].n), true);
 }
 function setTorch(on) {
   const r = PL.rig;
@@ -6065,7 +6656,7 @@ const SQ = {
   pressKey: 'Shtyp një tast për të filluar', pressTap: 'Prek ekranin për të filluar', mContinue: 'Vazhdo', kMove: 'Lëviz', kPick: 'Zgjidh', kBack: 'Kthehu',
   loading: 'Po përgatitet fusha e betejës…', glory: 'Lavdia', gate: 'Porta e Krujës', kruja: 'Kruja',
   glErr: 'Ky shfletues nuk mbështet WebGL 2, që i duhet lojës. Provo një version të ri të Chrome, Safari ose Firefox.',
-  mCampaign: 'Fushata', mCampaignD: 'Katër beteja, nga Torvioli në Vajkal',
+  mCampaign: 'Fushata', mCampaignD: 'Shtatë beteja, nga 1443 deri në 1466',
   mEndless: 'Mbrojtja pa fund', mEndlessD: 'Valë pas vale para portës së Krujës',
   gallery: 'Galeria', mGalleryD: 'Luftëtarët nga afër', settings: 'Cilësimet', mSettingsD: 'Grafika, zëri dhe kamera',
   record: 'Rekordi në mbrojtje: vala {0}, {1} pikë', mapSum: 'Ke fituar {0} nga {1} yje. Çdo betejë jep deri në tre.',
@@ -6075,6 +6666,18 @@ const SQ = {
   donateThanks: 'Faleminderit! Përfundoje dhuratën në faqen e PayPal.', donateAmt: 'Dhuro {0} euro përmes PayPal', donateItem: 'Mbështetje për lojën Skënderbeu',
   back: 'Kthehu', campaignBack: 'Fushata', toBattle: 'Në betejë', done: 'Gati', objectives: 'Detyrat', starsH: 'Yjet',
   M: {
+    flamuri: { name: 'Flamuri mbi Krujë', place: 'Kruja, 28 nëntor 1443',
+      text: 'Pas betejës së Nishit, Skënderbeu la ushtrinë e Sulltanit dhe u kthye në Arbëri me treqind kalorës. Garnizoni osman ende mban portën e Krujës. Në muzg, nën shi, thyej rojet para portës, mbaje portën kundër përforcimeve dhe ngrije flamurin e Kastriotëve mbi kështjellë.',
+      win: '«Lirinë nuk jua solla unë, por e gjeta këtu, në mes tuaj.» Flamuri i kuq me shqiponjën e zezë valon mbi Krujë.',
+      stars: ['Ngrije flamurin mbi Krujë', 'Mbaj mbi gjysmën e shëndetit', 'Shpëto të paktën katër luftëtarë'] },
+    albulena: { name: 'Beteja e Albulenës', place: 'Albulena (Ujëbardha), 2 shtator 1457',
+      text: 'Isak Beu dhe Hamza Kastrioti, nipi i Skënderbeut që kaloi në anën e Sulltanit, kanë ngritur kampin në fushën e Albulenës. Skënderbeu u tërhoq në male dhe ata besojnë se ushtria e tij u shpërnda. Në mjegullën e mëngjesit, bjeri kampit me luftëtarët e tu. Zëre rob Hamzanë dhe përzë Isak Beun nga fusha.',
+      win: 'Ushtria osmane u shpartallua në Albulenë. Hamza Kastrioti u zu rob dhe flamujt e Sulltanit ranë në duart e arbërve.',
+      stars: ['Fito Betejën e Albulenës', 'Mbaj mbi gjysmën e shëndetit', 'Kryeje brenda gjashtë minutave'] },
+    kruja2: { name: 'Rrethimi i dytë i Krujës', place: 'Kruja, 1466',
+      text: 'Sulltan Mehmeti II, pushtuesi i Kostandinopojës, ka rrethuar vetë Krujën. Katër topa të rëndë qëllojnë mbi muret nga ana tjetër e lumit, ndërsa këmbësoria sulmon portën. Në mes të stuhisë dil nga porta, kalo lumin dhe hidhi në erë topat një nga një, ndërsa malësorët mbajnë portën. Pastaj thyej sulmin e fundit.',
+      win: 'Sulltan Mehmeti II nuk e mori dot Krujën dhe u tërhoq. Rrethimi nuk mbaroi atë vit, por muret e Krujës qëndruan.',
+      stars: ['Mbroje Krujën', 'Porta mbetet mbi gjysmën', 'Hidh në erë topat brenda katër minutave'] },
     torvioll: { name: 'Beteja e Torviollit', place: 'Lugina e Torviollit, 29 qershor 1444',
       text: 'Ali Pasha ka zbritur me një ushtri të madhe në luginën e Torviollit. Skënderbeu i ka fshehur njerëzit e tij në pyjet përreth dhe pret. Përballo pararojën bashkë me malësorët. Kur ushtria osmane të futet thellë në luginë, pritat do të dalin nga pyjet.',
       win: 'Ushtria e Ali Pashës u shpartallua. Fitorja e Torviollit e bëri emrin e Skënderbeut të njohur në gjithë Evropën.',
@@ -6096,6 +6699,16 @@ const SQ = {
   oVanguard: 'Thyej pararojën osmane', oAmbush: 'Mund ushtrinë e Ali Pashës', oAli: 'Mposht Ali Pashën',
   oWaves: 'Mbaje portën dhjetë valë', oGate: 'Mos lejo që porta të thyhet', oBurn: 'Digj makinat e rrethimit', oReturn: 'Kthehu te porta e Krujës',
   oBallaban: 'Mposht Ballaban Pashën', oSurvive: 'Valë të mbajtura',
+  oGarrison: 'Thyej rojet osmane para portës', oFlag: 'Mbaje portën derisa të ngrihet flamuri', oCamp: 'Bjeri kampit osman', oHamza: 'Zëre rob Hamza Kastriotin',
+  oIsak: 'Përzë Isak Beun nga fusha', oGuns: 'Hidh në erë topat e Sulltanit', oLast: 'Thyej sulmin e fundit',
+  toGate: 'Te porta!', toGateSub: 'Mbaje portën dhe ngrije flamurin', flagRising: 'Flamuri po ngrihet', flagHeld: 'Dëbo armikun nga porta', flagGo: 'Kthehu te porta',
+  flagUp: 'Flamuri mbi Krujë!', flagUpSub: '«Lirinë nuk jua solla unë, por e gjeta këtu, në mes tuaj.»', garrison: 'Garnizoni u zgjua!', garrisonSub: 'Rojet osmane rrëmbejnë armët',
+  hamza: 'Hamza Kastrioti', hamzaSub: 'Nipi i Skënderbeut del kundër tij', hamzaTaken: 'Hamza u zu rob!', isakComes: 'Isak Beu mbledh kalorësit e tij',
+  isak: 'Isak Beu', isakSub: 'Komandanti i ushtrisë osmane hyn në betejë', rout: 'Isak Beu ikën!', routSub: 'Ushtria osmane shpartallohet', akinxhi: 'Akinxhiu',
+  spiking: 'Po vendos barutin', gunDown: 'Topi u hodh në erë!', gunsLeft: n => n === 1 ? 'Edhe një top' : 'Edhe ' + n + ' topa', gunsAll: 'Topat heshtën!', gunsAllSub: 'Sulltani nis sulmin e fundit',
+  hintFlag: 'Qëndro brenda rrethit te porta, pa asnjë armik në të, dhe flamuri ngrihet',
+  hintHark: 'Akinxhinjtë qëllojnë me hark nga kali. Ngrije shpatën kundër shigjetave ose sulmoji me vrull',
+  hintGuns: 'Kalo lumin dhe qëndro pranë një topi derisa të hidhet në erë. Ku toka shënohet me të kuqe, bie një gjyle',
   ambush: 'Pritë!', ambushSub: 'Malësorët dalin nga pyjet', ali: 'Ali Pasha', aliSub: 'Komandanti i ushtrisë osmane hyn në betejë',
   ballaban: 'Ballaban Pasha', ballabanSub: 'Ballaban Badera të sfidon', guards: 'Ballabani thërret kalorësit e tij', enraged: 'Ballabani tërbohet',
   burning: 'Mori flakë!', allBurn: 'Kampi digjet', allBurnSub: 'Kthehu te porta e Krujës', alarm: 'Alarm në kamp!', alarmSub: 'Rojet të kanë parë',
@@ -6117,7 +6730,10 @@ const SQ = {
     ['Spahiu', 'Kalorës osman me këmishë me hallka, helmetë me majë dhe shpatë të lakuar.'],
     ['Agai i jeniçerëve', 'Komandanti i jeniçerëve: më i madh e më i fortë, me shpatë të rëndë dhe pelerinë.'],
     ['Pasha', 'Komandanti i ushtrisë osmane, me kaftan mëndafshi, gëzof, çallmë të madhe dhe pelerinë të kuqe.'],
-    ['Ballaban Pasha', 'Ballaban Badera, shqiptar nga Mati në shërbim të Sulltanit dhe sanxhakbej i Ohrit. Kalorës i rëndë me shpatë të madhe, armiku më këmbëngulës i Skënderbeut.']
+    ['Ballaban Pasha', 'Ballaban Badera, shqiptar nga Mati në shërbim të Sulltanit dhe sanxhakbej i Ohrit. Kalorës i rëndë me shpatë të madhe, armiku më këmbëngulës i Skënderbeut.'],
+    ['Akinxhiu', 'Kalorës i lehtë osman me hark. Sulmon nga larg duke qarkuar rreth armikut dhe largohet me galop sapo e ndjekin.'],
+    ['Isak Beu', 'Komandanti osman në Betejën e Albulenës më 1457. Kalorës i rëndë me shpatë të madhe, që iku nga fusha kur ushtria e tij u thye.'],
+    ['Hamza Kastrioti', 'Nipi i Skënderbeut, që kaloi në anën e Sulltanit. Në Betejën e Albulenës më 1457 u zu rob.']
   ],
   sView: 'Pamja', viewNear: 'Afër', viewFar: 'Larg', sViewD: 'Afër: kamera pas shpinës së Skënderbeut. Larg: e gjithë fusha e betejës.',
   sGfx: 'Grafika', gfxHigh: 'E lartë', gfxLow: 'E shpejtë', sGfxD: 'E shpejta ul hijet, barin dhe pemët për telefona më të thjeshtë.',
@@ -6173,7 +6789,8 @@ Object.assign(SQ, {
     chg5: ['Ortek', 'Shkel pesë armiq me një vrull të vetëm'], stp5: ['Thundra e rëndë', 'Godit pesë armiq me një ngritje të kalit'], hvy4: ['Goditja e rëndë', 'Godit katër armiq me një goditje të rëndë'],
     boss10: ['Gjahtar komandantësh', 'Mposht 10 komandantë osmanë'], elite10: ['Elita bie', 'Rrëzo 10 luftëtarë të elitës'], cry20: ['Zëri i maleve', 'Thirr Kushtrimin 20 herë'],
     torvioll: ['Torvioli', 'Fito Betejën e Torviollit'], kruja: ['Kruja qëndron', 'Mbaje Krujën dhjetë valë'], raid: ['Natë zjarri', 'Digj makinat e rrethimit dhe kthehu'], duel: ['Dueli i Vajkalit', 'Mund Ballaban Pashën'],
-    stars3: ['Tre yje', 'Fito tre yje në një betejë'], stars12: ['Të gjitha yjet', 'Fito të 12 yjet e fushatës'], flawless: ['Pa asnjë plagë', 'Fito një betejë pa rënë shëndeti nën 90%'],
+    flamuri: ['Flamuri', 'Ngrije flamurin mbi Krujë'], albulena: ['Albulena', 'Fito Betejën e Albulenës'], kruja2: ['Topat heshtin', 'Mbroje Krujën nga topat e Sulltanit'],
+    stars3: ['Tre yje', 'Fito tre yje në një betejë'], stars12: ['Të gjitha yjet', 'Fito të gjitha yjet e fushatës'], flawless: ['Pa asnjë plagë', 'Fito një betejë pa rënë shëndeti nën 90%'],
     wave15: ['Muri i gjallë', 'Mbaj 15 valë në Mbrojtjen pa fund ose në sfidën e ditës'], wave25: ['E pathyeshme', 'Mbaj 25 valë në Mbrojtjen pa fund ose në sfidën e ditës'],
     daily1: ['Sfida e parë', 'Kryej një sfidë të ditës'], daily7: ['Shtatë ditë', 'Kryej sfidën e ditës shtatë ditë radhazi'], maxed: ['Çeliku i Kastriotëve', 'Çoje një armë në nivelin V']
   },
@@ -6194,7 +6811,8 @@ Object.assign(SQ, {
     rams: ['Deshtë e rrethimit', 'Një dash në çdo valë, dhe porta nis e dëmtuar'], elite: ['Elita e Sulltanit', 'Një në pesë armiq është luftëtar i elitës'],
     bosses: ['Agallarët', 'Një aga i jeniçerëve në çdo valë të dytë'], fury: ['Gjak i nxehtë', 'Të gjithë godasin 50% më fort, edhe ti'],
     swift: ['Vrulli', 'Armiqtë lëvizin më shpejt, por edhe vrulli yt kthehet më shpejt'], javs: ['Shtiza pa fund', 'Dy shtiza më shumë, që rimbushen shumë më shpejt'],
-    nogift: ['Pa dhurata', 'Asnjë dhuratë mes valëve, por çdo armik jep dyfish dukatë']
+    nogift: ['Pa dhurata', 'Asnjë dhuratë mes valëve, por çdo armik jep dyfish dukatë'],
+    hark: ['Akinxhinjtë', 'Kalorës me hark sulmojnë që në valën e parë'], bombs: ['Topat e Sulltanit', 'Gjyle topash bien mbi fushë gjatë gjithë betejës']
   },
   tMedal: 'Medalje e re', tOrder: 'Urdhër i kryer', tOrders: 'Të gjithë urdhrat e ditës', tLevel: 'Niveli {0}', tBought: 'U ble',
   tiers: ['Shkatërrim!', 'Furtunë!', 'I pandalshëm!', 'Legjendë!'],
@@ -6279,6 +6897,66 @@ const AU = {
   lose() { if (this.ok('lo')) [330, 262, 220, 165].forEach((f, i) => this.tone('triangle', f, f * 0.97, 0.7, 0.13, i * 0.32)); },
   pick() { if (this.ok('pk')) { this.tone('triangle', 660, 660, 0.15, 0.12); this.tone('triangle', 990, 990, 0.25, 0.1, 0.08); } },
   tick() { if (this.ok('tk', 0.05)) this.tone('triangle', 1400, 1300, 0.05, 0.05); },
+  // rain: two decorrelated hisses on the music bus' neighbour, and a low roar under them when it storms
+  rainSet(level, storm) {
+    const c = this.ctx; if (!c) return;
+    if (!this.rainN) {
+      const g = c.createGain(); g.gain.value = 0; g.connect(this.sfx);
+      for (const [rate, f0, f1] of [[1, 1200, 9000], [0.83, 500, 2600]]) {
+        const s = c.createBufferSource(); s.buffer = this.noise; s.loop = true; s.playbackRate.value = rate;
+        const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = f0; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = f1;
+        s.connect(hp); hp.connect(lp); lp.connect(g); s.start();
+      }
+      const r = c.createBufferSource(); r.buffer = this.noise; r.loop = true; r.playbackRate.value = 0.5;
+      const rl = c.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 180; const rg = c.createGain(); rg.gain.value = 0;
+      r.connect(rl); rl.connect(rg); rg.connect(this.sfx); r.start();
+      this.rainN = { g, rg };
+    }
+    const v = this.on ? level * 0.12 : 0, w = this.on && storm ? 0.16 : 0;
+    if (this.rainL !== v) { this.rainL = v; this.rainN.g.gain.setTargetAtTime(v, c.currentTime, 0.9); }
+    if (this.rainW !== w) { this.rainW = w; this.rainN.rg.gain.setTargetAtTime(w, c.currentTime, 1.2); }
+  },
+  thunder(delay, k) {
+    if (!this.ctx || !this.on) return;
+    const c = this.ctx, t0 = c.currentTime + delay, near = Math.max(0, Math.min(1, k));
+    if (near > 0.45) this.nz(0.3, 'highpass', 2400, 500, 0.5, 0.3 * near, null, t0);
+    const s = c.createBufferSource(); s.buffer = this.noise; s.loop = true; s.playbackRate.value = 0.6;
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(380 + 500 * near, t0); f.frequency.exponentialRampToValueAtTime(70, t0 + 3.4);
+    const g = c.createGain(), pk = 0.22 + 0.4 * near;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(pk, t0 + 0.07); g.gain.exponentialRampToValueAtTime(pk * 0.45, t0 + 0.55);
+    g.gain.exponentialRampToValueAtTime(pk * 0.8, t0 + 0.95); g.gain.exponentialRampToValueAtTime(pk * 0.3, t0 + 1.8); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.8);
+    s.connect(f); f.connect(g); g.connect(this.sfx); s.start(t0); s.stop(t0 + 4);
+  },
+  // a bombard: a deep thump with a crack on top when close, and a long roll after it; far off, the sound takes its time to arrive
+  boom(d) {
+    if (!this.ok('bm', 0.06)) return;
+    const c = this.ctx, near = Math.max(0.08, Math.min(1, 1 - d / 170)), t0 = c.currentTime + Math.min(0.45, d / 343 * 0.6);
+    const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(74, t0); o.frequency.exponentialRampToValueAtTime(26, t0 + 0.7);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.75 * near, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.0);
+    o.connect(g); g.connect(this.sfx); o.start(t0); o.stop(t0 + 1.05);
+    this.nz(0.6, 'lowpass', 700 + 2200 * near, 110, 0.7, 0.55 * near, null, t0);
+    if (near > 0.55) this.nz(0.14, 'highpass', 2800, 900, 0.6, 0.3 * near, null, t0);
+    const s = c.createBufferSource(); s.buffer = this.noise; s.loop = true; s.playbackRate.value = 0.55;
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(320, t0 + 0.1); f.frequency.exponentialRampToValueAtTime(60, t0 + 2.6);
+    const g2 = c.createGain(); g2.gain.setValueAtTime(0.0001, t0 + 0.05); g2.gain.exponentialRampToValueAtTime(0.22 * near + 0.05, t0 + 0.3); g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.8);
+    s.connect(f); f.connect(g2); g2.connect(this.sfx); s.start(t0); s.stop(t0 + 2.9);
+  },
+  // a ball striking home: stone cracking and earth thrown up
+  crash(d) {
+    if (!this.ok('cr', 0.05)) return;
+    const near = Math.max(0.1, Math.min(1, 1 - d / 140)), dl = Math.min(0.3, d / 343 * 0.5), t0 = this.ctx.currentTime + dl;
+    this.tone('sine', 95, 38, 0.45, 0.55 * near, dl);
+    this.nz(0.35, 'bandpass', 1600, 400, 0.9, 0.42 * near, null, t0);
+    this.nz(0.8, 'lowpass', 900, 100, 0.6, 0.3 * near, null, t0 + 0.04);
+  },
+  // a ball coming down on the hero: a falling whistle, louder as it nears, ending as it lands
+  whistle(T) {
+    if (!this.ok('wh', 0.3)) return;
+    const c = this.ctx, t0 = c.currentTime, o = c.createOscillator(), g = c.createGain(); o.type = 'sine';
+    o.frequency.setValueAtTime(1400, t0); o.frequency.exponentialRampToValueAtTime(380, t0 + T);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.045, t0 + T * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t0 + T);
+    o.connect(g); g.connect(this.sfx); o.start(t0); o.stop(t0 + T + 0.05);
+  },
   // gold: a bright clink as each coin lands in the purse
   coin() { if (this.ok('cn', 0.04)) { const f = 1900 + Math.random() * 260; this.tone('triangle', f, f * 0.995, 0.08, 0.045); this.tone('sine', f * 1.5, f * 1.5, 0.16, 0.03, 0.03); } },
   buy() { if (this.ok('by', 0.2)) { [1319, 1568, 2093].forEach((f, i) => this.tone('triangle', f, f, 0.18, 0.07, i * 0.06)); this.tone('sine', 110, 60, 0.3, 0.25); } },
@@ -6547,7 +7225,7 @@ function renderObj() {
   for (const o of MS.obj) {
     if (o.hidden || (m.waves && o.k === 'oWaves') || (m.endless && !m.daily)) continue;
     const li = document.createElement('li'); li.dataset.k = o.k; li.textContent = t(o.k);
-    if (o.goal) { const b = document.createElement('b'); b.className = 'num'; b.textContent = ' ' + o.n + '/' + o.goal; li.appendChild(b); }
+    if (o.goal) { const b = document.createElement('b'); b.className = 'num'; b.textContent = ' ' + (o.pct ? o.n + '%' : o.n + '/' + o.goal); li.appendChild(b); }
     if (o.done) li.className = 'done'; if (!old.has(o.k)) li.classList.add('fresh');
     ul.appendChild(li);
   }
@@ -6555,7 +7233,7 @@ function renderObj() {
 }
 const _gv = [0, 0, 0];
 function updateGateInd() {
-  const el = $('gateInd'), ret = MS.cur && MS.cur.id === 'raid' && MS.phase === 1;
+  const el = $('gateInd'), ret = !!(MS.cur && MS.cur.toGate && MS.cur.toGate());
   if ((G.gateAlert <= 0 && !ret) || G.state !== 'play') { setHide(el, true); return; }
   setTxt('gateIndT', ret ? t('kruja') : t('gateInd')); setCls(el, 'bad', !ret);
   const gx = 0 - CAM.eye[0], gy = 3.3 - CAM.eye[1], gz = -29 - CAM.eye[2];
@@ -6575,16 +7253,16 @@ function updateGateInd() {
 function updatePrompt() {
   const el = $('prompt'), e = MS.prompt;
   if (!e || G.state !== 'play') { setHide(el, true); return; }
-  project(e.x, e.y + (e.kind === 'tower' ? 7 : 2.2), e.z, _pp);
+  project(e.x, e.y + (e.kind === 'tower' ? 7 : e.kind === 'flag' ? 0 : 2.2), e.z, _pp);
   if (!_pp.ok) { setHide(el, true); return; }
   el.style.transform = `translate(${_pp.x.toFixed(0)}px,${_pp.y.toFixed(0)}px)`;
-  $('promptRing').style.strokeDashoffset = (188.5 * (1 - clamp(e.burn, 0, 1))).toFixed(1); setTxt('promptT', t('igniting'));
+  $('promptRing').style.strokeDashoffset = (188.5 * (1 - clamp(e.burn, 0, 1))).toFixed(1); setTxt('promptT', MS.promptT || t('igniting'));
   setHide(el, false);
 }
 let miniTick = 0;
 function drawMini() {
   if ((miniTick++ & 3) !== 0) return;
-  const c = UI.mini.getContext('2d'), S = 184, h = S / 2, raid = MS.cur && MS.cur.id === 'raid', sc = raid ? 0.78 : 1.6, cx = PL.x * (raid ? 1 : 0.5), cz = raid ? PL.z : PL.z * 0.5 + 10;
+  const c = UI.mini.getContext('2d'), S = 184, h = S / 2, raid = !!(MS.cur && MS.cur.wide), sc = raid ? 0.78 : 1.6, cx = PL.x * (raid ? 1 : 0.5), cz = raid ? PL.z : PL.z * 0.5 + 10;
   const yaw = CAM.yawV, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx;
   const Pm = (x, z) => { const dx = x - cx, dz = z - cz; return [h + (dx * rx + dz * rz) * sc, h - (dx * fx + dz * fz) * sc]; };
   c.clearRect(0, 0, S, S); c.save(); c.beginPath(); c.arc(h, h, h - 2, 0, TAU); c.clip();
@@ -6592,7 +7270,10 @@ function drawMini() {
   if (raid) { c.strokeStyle = 'rgba(120,150,170,.55)'; c.lineWidth = 9 * sc; c.beginPath(); for (let x = -90; x <= 90; x += 10) { const p = Pm(x, riverZ(x)); x === -90 ? c.moveTo(p[0], p[1]) : c.lineTo(p[0], p[1]); } c.stroke(); }
   c.strokeStyle = '#c9b48a'; c.lineWidth = 4; c.beginPath(); let p = Pm(-46, -30.2); c.moveTo(p[0], p[1]); p = Pm(46, -30.2); c.lineTo(p[0], p[1]); c.stroke();
   p = Pm(0, -29.5); c.fillStyle = G.gateFlash > 0 ? '#ff5a3c' : '#e0b04f'; c.save(); c.translate(p[0], p[1]); c.rotate(PI / 4); c.fillRect(-5, -5, 10, 10); c.restore();
-  if (raid) for (const e of SIEGE) { p = Pm(e.x, e.z); c.fillStyle = e.fire > 0 ? '#ffb347' : '#e0402c'; c.fillRect(p[0] - 4, p[1] - 4, 8, 8); }
+  // what the battle is about: the engines to burn, the guns to blow up, the gate to hold
+  const tgts = MS.cur && MS.cur.id === 'raid' ? SIEGE : BOMB.on && MS.cur && MS.cur.id === 'kruja2' ? BOMB.guns.map(g => g.e) : [];
+  for (const e of tgts) { p = Pm(e.x, e.z); c.fillStyle = e.fire > 0 ? '#ffb347' : '#e0402c'; c.fillRect(p[0] - 4, p[1] - 4, 8, 8); }
+  if (MS.cur && MS.cur.id === 'flamuri' && MS.phase === 1) { p = Pm(FLAG_ZONE.x, FLAG_ZONE.z); c.strokeStyle = '#f0c35a'; c.lineWidth = 2; c.beginPath(); c.arc(p[0], p[1], FLAG_ZONE.r * sc, 0, TAU); c.stroke(); }
   for (const u of G.units) {
     if (u.dead) continue; p = Pm(u.x, u.z);
     c.fillStyle = u.team === 0 ? '#f4efe5' : u.type === 'ram' ? '#c88a3a' : u.elite ? '#f0c35a' : u.guard && !G.alarm ? 'rgba(224,64,44,.55)' : '#e0402c';
@@ -6660,6 +7341,7 @@ function queueHints() {
   if (id === 'kruja' && !seen.gate) L.push([33, 'hintGate', 4.8], [40, 'hintSkills', 5]);
   if (id === 'raid') L.push([3.2, 'hintTorch', 6]);
   seen.base = seen.combat = true; if (id === 'kruja') seen.gate = true; store.set('hintsSeen', seen);
+  if (MS.cur && MS.cur.hints) for (const h of MS.cur.hints) if (hintOk(h[1])) L.push(h);
   HINTS.list = L.sort((a, b) => a[0] - b[0]);
 }
 /* the objectives, the boss bar and the hint stack down from the top without overlapping */
@@ -6769,9 +7451,10 @@ function applyI18n() {
 }
 /* campaign */
 const SHOTS = {
-  torvioll: { eye: [-34, 8, 44], tgt: [6, 3, 22] }, kruja: { eye: [6, 8, 26], tgt: [0, 6, -30] }, raid: { eye: [-6, 15, 62], tgt: [0, 3, 118] },
-  duel: { eye: [26, 5, 30], tgt: [0, 3, 18] }, endless: { eye: [-10, 9, 24], tgt: [0, 6, -30] }
+  flamuri: { eye: [13, 3.2, 4], tgt: [-1, 7, -29] }, torvioll: { eye: [-34, 8, 44], tgt: [6, 3, 22] }, kruja: { eye: [6, 8, 26], tgt: [0, 6, -30] }, raid: { eye: [-6, 15, 62], tgt: [0, 3, 118] },
+  albulena: { eye: [-14, 6, 74], tgt: [2, 3, 124] }, duel: { eye: [26, 5, 30], tgt: [0, 3, 18] }, kruja2: { eye: [-37, 4.6, 97.5], tgt: [-4, 1.4, 104] }, endless: { eye: [-10, 9, 24], tgt: [0, 6, -30] }
 };
+const missionById = id => MISSIONS.find(m => m.id === id);
 function openMap() {
   if (!ready) return; AU.init();
   const box = $('missions'); box.textContent = ''; let tot = 0;
@@ -6784,19 +7467,18 @@ function openMap() {
     li.appendChild(b); box.appendChild(li);
   });
   $('mapSum').textContent = t('mapSum', tot, MISSIONS.length * 3);
-  if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD);
+  setSky(TITLE_TOD, 'clear');
   UI.shot = SHOTS[MISSIONS[0].id]; showScreen('map');
 }
 function openBrief(m) {
   const L = SQ.M[m.id]; MS.sel = m;
   $('brWhen').textContent = L.place; $('brName').textContent = L.name; $('brText').textContent = L.text;
   const ol = $('brObj'); ol.textContent = '';
-  const objs = m.id === 'torvioll' ? ['oVanguard', 'oAmbush', 'oAli'] : m.id === 'kruja' ? ['oWaves', 'oGate'] : m.id === 'raid' ? ['oBurn', 'oReturn'] : m.id === 'duel' ? ['oBallaban'] : ['oSurvive'];
-  for (const k of objs) { const li = document.createElement('li'); li.textContent = t(k); ol.appendChild(li); }
+  for (const k of m.objs || ['oSurvive']) { const li = document.createElement('li'); li.textContent = t(k); ol.appendChild(li); }
   const sl = $('brStars'); sl.textContent = ''; const n = PROG.stars(m.id);
   L.stars.forEach((s, i) => { const li = document.createElement('li'); li.innerHTML = starSvg(i < n); li.append(s); sl.appendChild(li); });
   sl.parentElement.querySelector('[data-i18n="starsH"]').hidden = !L.stars.length;
-  UI.shot = SHOTS[m.id]; if (ATM.tod !== m.tod) setTimeOfDay(m.tod);
+  UI.shot = SHOTS[m.id]; setSky(m.tod, m.wx);
   showScreen('brief', '#brGo');
 }
 $('mCampaign').addEventListener('click', openMap);
@@ -6805,7 +7487,7 @@ $('mSettings').addEventListener('click', () => openSettings('title'));
 $('mapBack').addEventListener('click', toTitleMenu);
 $('brBack').addEventListener('click', () => MS.sel === ENDLESS ? toTitleMenu() : openMap());
 $('brGo').addEventListener('click', () => startGame(MS.sel));
-function toTitleMenu() { UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD); showScreen('title'); applyI18n(); }
+function toTitleMenu() { UI.shot = null; setSky(TITLE_TOD, 'clear'); showScreen('title'); applyI18n(); }
 function backKey() {
   if (G.state === 'gallery') return;
   if (!$('brief').hidden) $('brBack').click(); else if (!$('map').hidden) toTitleMenu(); else if (!$('settings').hidden) closeSettings(); else if (!$('donate').hidden) closeDonate();
@@ -6967,6 +7649,8 @@ function clearField() {
   for (const u of G.units) scene.remove(u.rig.root); G.units.length = 0;
   for (const a of G.arrows) scene.remove(a.node); G.arrows.length = 0; G.slams.length = 0;
   psN.n = 0; psA.n = 0; G.shock = null; clearDeco(); MS.prompt = null;
+  for (const n of MS.props) scene.remove(n); MS.props.length = 0;
+  bombardsOff(); MS.craters.length = 0; MS.fires = []; MS.camShot = null; setCastleFlags('eagle');
 }
 function resetHero(z) {
   Object.assign(PL, { x: 0, z, vx: 0, vz: 0, spd: 0, steer: 0, hp: 100, maxHp: 100, alive: true, deadT: 0, face: 0, chargeT: 0, chargeCd: 0, rearT: 0, rearCd: 0, rearAmt: 0, inv: 0, trail: [],
@@ -6977,14 +7661,14 @@ function resetHero(z) {
 }
 function leaveBattle() { metaLeave(); clearField(); setTorch(false); resetSiege(true); MS.cur = null; Object.assign(ARENA, ARENA0); G.noGate = false; G.alarm = false; G.state = 'title'; UI.hud.hidden = true; resetHero(-16); }
 function beginGame(m) {
-  m = m || MISSIONS[1];
+  m = m || missionById('kruja');
   clearField(); setTorch(false); resetSiege(!!(m.gate || m.id === 'raid')); resetMods(); resetInput();
   G.gid = (G.gid || 0) + 1;
   Object.assign(G, { wave: 0, kills: 0, score: 0, time: 0, gateHp: G.gateMax, glory: 0, between: 0, clearT: -1, hitStop: 0, slowT: 0, gateWarnT: 0, gateFlash: 0, gateAlert: 0, archerT: 0, cryAnn: false, queue: [], streak: 0, streakT: 0, parries: 0, alarm: false, noGate: !m.gate,
     dmods: [], foeDmg: 1, foeSpd: 1, goldK: 1, noGifts: false, eliteP: 0, javPierce: 1, cryHeal: 25, cryAllies: 4 });
-  Object.assign(MS, { cur: m, phase: 0, t: 0, q: [], spawnT: 0, boss: null, prompt: null, alarmT: 0, reinT: 0, dirty: true });
+  Object.assign(MS, { cur: m, phase: 0, t: 0, q: [], spawnT: 0, boss: null, prompt: null, promptT: '', alarmT: 0, reinT: 0, dirty: true, hold: 0, winT: 0, camShot: null });
   Object.assign(ARENA, m.arena);
-  if (ATM.tod !== m.tod) setTimeOfDay(m.tod);
+  setSky(m.tod, m.wx);
   gateNode.tint = null; gateNode.p[2] = -29.0;
   const fromTitle = G.state === 'title';
   resetHero(-17); m.setup(); metaBegin(m); CAM.yaw = PL.face; CAM.off = 0;
@@ -6996,11 +7680,11 @@ function beginGame(m) {
 function startGame(m) {
   if (!ready) return;
   AU.init();
-  m = m || MS.cur || MISSIONS[1];
+  m = m || MS.cur || missionById('kruja');
   if (G.state === 'title') beginGame(m); else fadeSwap(() => beginGame(m));
 }
 function toTitle() {
-  fadeSwap(() => { leaveBattle(); UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD); showScreen('title'); applyI18n(); AU.isoSet(0.4); });
+  fadeSwap(() => { leaveBattle(); UI.shot = null; setSky(TITLE_TOD, 'clear'); showScreen('title'); applyI18n(); AU.isoSet(0.4); });
 }
 function setGfx(q, auto) {
   if (!auto) store.set('gfx', q);
@@ -7043,6 +7727,12 @@ function updateCam(dt) {
     RS.dof = [Math.hypot(PL.x - CAM.eye[0], PL.y + 1.8 - CAM.eye[1], PL.z - CAM.eye[2]), 22, 6];
     PL.face = damp(PL.face, sa + PI + 0.7, 2, dt);
     CAM.yawV = sa; return;
+  }
+  // a battle's closing image (the flag going up over Krujë): the lens leaves the hero and holds on it through the end
+  if (MS.camShot && (G.state === 'play' || G.state === 'over')) {
+    const s = MS.camShot, k = 1 - Math.exp(-dt * 1.8);
+    for (let i = 0; i < 3; i++) { CAM.eye[i] += (s.eye[i] - CAM.eye[i]) * k; CAM.tgt[i] += (s.tgt[i] - CAM.tgt[i]) * k; }
+    CAM.fov = damp(CAM.fov, (portrait ? 64 : 48) * PI / 180, 1.6, dt); CAM.fovS = CAM.fov; CAM.shake = 0; return;
   }
   // when the hero falls the lens pulls slowly back; when the battle is over it turns slowly around him
   CAM.outro = damp(CAM.outro || 0, G.state === 'over' || !PL.alive ? 1 : 0, 0.7, dt);
@@ -7116,6 +7806,7 @@ function updateCam(dt) {
     let f = sstep(1.2, 3.0, d);
     const al = (dx * hx + dy * hy + dz * hz) / hl;
     if (al > 0 && al < hl - 1.3) f = Math.min(f, lerp(0.35, 1, sstep(0.45, 1.25, Math.sqrt(Math.max(0, d * d - al * al)))));
+    if (u.fadeK != null) f = Math.min(f, u.fadeK); // a man running off the edge of the field melts away
     u.rig.root.fade = f < 0.99 ? f : null;
   }
 }
@@ -7124,9 +7815,11 @@ function updateCam(dt) {
 function decalY(x, z, r) { return Math.max(groundH(x, z), groundH(x + r, z), groundH(x - r, z), groundH(x, z + r), groundH(x, z - r)) + 0.06; }
 function queueFx(dt) {
   fxN.n = 0; fxA.n = 0;
+  for (const c of MS.craters) fxN.disc(c[0], c[1], decalY(c[0], c[1], c[2]) - 0.02, c[2], 0.012, 0.01, 0.008, 0.62, 0); // scorched hollows where the balls fell
+  if (MS.cur && MS.cur.decals && G.state === 'play') MS.cur.decals(dt);
   for (const s of G.slams) {
     const k = s.t / s.dur, y = decalY(s.x, s.z, s.r);
-    fxN.disc(s.x, s.z, y, s.r, 0.9, 0.1, 0.04, 0.5 + 0.4 * k, 1);
+    fxN.disc(s.x, s.z, y, s.r, 0.9, 0.1, 0.04, s.ball ? 0.2 + 0.4 * k * k : 0.5 + 0.4 * k, 1); // a ball's mark starts faint and darkens as it comes down
     fxA.disc(s.x, s.z, y + 0.01, s.r * k, 2.4, 0.5, 0.15, 0.35, 0);
   }
   if (G.shock) {
@@ -7164,7 +7857,7 @@ function queueFx(dt) {
   if (G.cryLight > 0) { G.cryLight = Math.max(0, G.cryLight - dt * 1.4); PLIGHTS.unshift({ x: PL.x, y: PL.y + 3, z: PL.z, r: 16, c: [1, 0.75, 0.35], i: G.cryLight * 6 }); }
   RS.flash = Math.max(0, RS.flash - dt * 2.5);
   RS.speed = damp(RS.speed || 0, PL.chargeT > 0 && G.state === 'play' ? 1 : 0, 6, dt);
-  drawTrail();
+  drawTrail(); drawBolt();
 }
 
 /* ---- main loop with steady resolution scaling ---- */
@@ -7205,7 +7898,7 @@ function step(dt) {
     for (const u of G.units) { if (u.team === 1) updateEnemy(u, gdt); else updateAlly(u, gdt); }
     separate();
     for (let i = G.units.length - 1; i >= 0; i--) if (G.units[i].gone) G.units.splice(i, 1);
-    updateArrows(gdt); updateSlams(gdt); updateGarrison(gdt); missionUpdate(gdt); updateHints(dt);
+    updateArrows(gdt); updateSlams(gdt); updateBombards(gdt); updateGarrison(gdt); missionUpdate(gdt); updateHints(dt);
     const battle = MS.cur && !MS.cur.waves ? (MS.cur.id === 'raid' && !G.alarm ? 0.2 : 0.75) : G.between > 0 || G.clearT !== -1 ? 0 : 0.55 + Math.min(0.45, G.wave * 0.05);
     if (SET.music) AU.drums(battle); AU.isoSet(battle > 0 ? 0.65 : 0.35);
   } else if (G.state === 'title' || G.state === 'over') {
@@ -7216,7 +7909,7 @@ function step(dt) {
   }
   gateNode.p[2] = damp(gateNode.p[2], -29.0, 8, dt);
   updateCam(dt);
-  psN.update(dt); psA.update(dt); updateWorldFx(dt);
+  psN.update(dt); psA.update(dt); updateWorldFx(dt); updateWeather(dt);
   queueFx(dt);
   IN.atkPress = IN.dash = IN.spin = IN.cry = IN.jav = false;
 }
@@ -7258,12 +7951,14 @@ function boot() {
     }
   }, 30);
 }
-window.__skb = { bot: false, G, PL, IN, CAM, RS, MS, MISSIONS, ENDLESS, step, startGame, beginGame, chooseUpgrade, UPGRADES, nextWave, spawnEnemy, setGfx, gatherInput, btnHeld, STICK, openMap, openBrief, openSettings, setTimeOfDay,
+window.__skb = { bot: false, G, PL, IN, CAM, RS, MS, MISSIONS, ENDLESS, step, startGame, beginGame, chooseUpgrade, UPGRADES, nextWave, spawnEnemy, setGfx, gatherInput, btnHeld, STICK, openMap, openBrief, openSettings, setTimeOfDay, setSky, WX, strike,
+  BOMB, fireBombard, bombardsOn, setCastleFlags, routAll, missionById,
   hud: () => { UI.cache = {}; MS.dirty = true; updateHud(0.016); drawMini(); drawMini(); drawMini(); drawMini(); updateNums(0.001); updateEBars(0.001); updateCoins(0.001); placeHint(); }, render: (f, cdt) => { updateWorld(scene, null); updateCloths(cdt || 0); RS.focus = f || null; setCamera(); render(); }, cloths: () => CLOTHS, tick: (dt) => { step(dt); updateWorld(scene, null); updateCloths(CLOTH_DT); updateCoins(dt); } };
 /* ===== Galeria: the sculpted warriors up close, orbit with drag / pinch / wheel ===== */
 const GAL_ITEMS = [
   { k: 'hero', horse: true }, { k: 'ally' }, { k: 'jan' }, { k: 'azap' }, { k: 'archer' },
-  { k: 'sipahi', horse: true }, { k: 'agha', sc: 1.38 }, { k: 'pasha', sc: 1.32 }, { k: 'ballaban', horse: true, sc: 1.12 }
+  { k: 'sipahi', horse: true }, { k: 'agha', sc: 1.38 }, { k: 'pasha', sc: 1.32 }, { k: 'ballaban', horse: true, sc: 1.12 },
+  { k: 'akinxhi', horse: true, sc: 0.94 }, { k: 'isak', horse: true, sc: 1.1 }, { k: 'hamza', sc: 1.26 }
 ];
 const GAL = { i: 0, rig: null, yaw: 0, pitch: 0.1, zoom: 1, t: 0, idle: 9, ptr: new Map(), pinch: 0, c: [0, 0, 0], face: 0 };
 function galRig(k) {
@@ -7305,7 +8000,11 @@ function galUpdate(dt) {
   if (it.k === 'hero') { IN.mx = IN.my = 0; IN.atk = false; PL.face = GAL.face; updatePlayer(dt); }
   else if (GAL.rig) {
     const r = GAL.rig;
-    if (r.kind === 'horse') { poseHorse(r, dt, 0, 0); r.rhead.r[1] = Math.sin(tt * 0.45) * 0.3; r.twist.r[1] = Math.sin(tt * 0.3) * 0.08; }
+    if (r.kind === 'horse') {
+      poseHorse(r, dt, 0, 0); r.rhead.r[1] = Math.sin(tt * 0.45) * 0.3; r.twist.r[1] = Math.sin(tt * 0.3) * 0.08;
+      // the horse archer holds a half-drawn bow, turned a little in the saddle
+      if (it.k === 'akinxhi') { r.twist.r[1] = 0.45 + Math.sin(tt * 0.3) * 0.06; r.armL.r = [-1.5, 0, 0]; r.foreL.r[0] = -0.05; r.armR.r = [-1.45, 0.55, 0]; r.foreR.r[0] = -1.75; r.rhead.r[1] = 0.25; }
+    }
     else {
       poseWalk(r, 0, 0);
       r.chest.r[0] = b * 0.018; r.head.r[1] = Math.sin(tt * 0.45) * 0.32; r.head.r[0] = 0.03 + Math.sin(tt * 0.6) * 0.03;
@@ -7352,7 +8051,7 @@ function galUpdate(dt) {
    daily challenge. The profile is kept in the browser (skb_prof); whatever a battle earns is credited the moment it is earned. ===== */
 
 /* ---- tables ---- */
-const GOLDV = { azap: 2, jan: 3, archer: 3, sipahi: 5, ram: 8, agha: 25, pasha: 50, ali: 50, ballaban: 100 };
+const GOLDV = { azap: 2, jan: 3, archer: 3, sipahi: 5, akinxhi: 5, ram: 8, agha: 25, pasha: 50, ali: 50, ballaban: 100, isak: 80, hamza: 60 };
 const LV_MAX = 50, TITLE_LV = [1, 3, 6, 10, 15, 20, 30, 40, 50];
 const lvNeed = L => 100 + 50 * L + 10 * L * L; // experience from level L to the next
 const ARMS = [
@@ -7409,8 +8108,11 @@ const MEDALS = [
   { id: 'kruja', ic: 'gate', g: 60, prog: true, n: () => PROG.stars('kruja') ? 1 : 0, goal: 1 },
   { id: 'raid', ic: 'flame', g: 60, prog: true, n: () => PROG.stars('raid') ? 1 : 0, goal: 1 },
   { id: 'duel', ic: 'laurel', g: 80, prog: true, n: () => PROG.stars('duel') ? 1 : 0, goal: 1 },
+  { id: 'flamuri', ic: 'flag2', g: 40, prog: true, n: () => PROG.stars('flamuri') ? 1 : 0, goal: 1 },
+  { id: 'albulena', ic: 'laurel', g: 80, prog: true, n: () => PROG.stars('albulena') ? 1 : 0, goal: 1 },
+  { id: 'kruja2', ic: 'cannon', g: 100, prog: true, n: () => PROG.stars('kruja2') ? 1 : 0, goal: 1 },
   { id: 'stars3', ic: 'star', g: 40, prog: true, n: () => MISSIONS.some(m => PROG.stars(m.id) >= 3) ? 1 : 0, goal: 1 },
-  { id: 'stars12', ic: 'star', g: 300, prog: true, n: totalStars, goal: 12 },
+  { id: 'stars12', ic: 'star', g: 300, prog: true, n: totalStars, goal: MISSIONS.length * 3 },
   { id: 'flawless', ic: 'blk', g: 120 },
   { id: 'wave15', ic: 'gate', g: 100, n: P => P.st.bestWave, goal: 15 },
   { id: 'wave25', ic: 'gate', g: 250, n: P => P.st.bestWave, goal: 25 },
@@ -7426,8 +8128,8 @@ const ORDERS = [
   { id: 'sip', s: 'sipahi', n: 6, g: 45 }, { id: 'arc', s: 'archers', n: 12, g: 40 }, { id: 'str', s: 'streak', n: 10, g: 45, max: true }
 ];
 const ORD_BONUS = 60, DAILY_GOAL = 5;
-const DMODS = ['cav', 'archers', 'rams', 'elite', 'bosses', 'fury', 'swift', 'javs', 'nogift'];
-const DMOD_LOOK = { cav: ['dash', 'horse'], archers: ['bow', 'allies'], rams: ['gate', 'gate'], elite: ['star', 'jav'], bosses: ['crown', 'body'], fury: ['flame', 'body'], swift: ['bolt', 'horse'], javs: ['jav', 'jav'], nogift: ['coin', 'jav'] };
+const DMODS = ['cav', 'archers', 'rams', 'elite', 'bosses', 'fury', 'swift', 'javs', 'nogift', 'hark', 'bombs'];
+const DMOD_LOOK = { cav: ['dash', 'horse'], archers: ['bow', 'allies'], rams: ['gate', 'gate'], elite: ['star', 'jav'], bosses: ['crown', 'body'], fury: ['flame', 'body'], swift: ['bolt', 'horse'], javs: ['jav', 'jav'], nogift: ['coin', 'jav'], hark: ['bow', 'horse'], bombs: ['cannon', 'gate'] };
 const STREAK_TIERS = [[5, 5], [8, 10], [12, 20], [20, 40]]; // kills in a row and the gold it pays
 Object.assign(ICON, {
   crown: '<path d="M4 18h16M5 18L4 8l5 4 3-7 3 7 5-4-1 10"/>',
@@ -7437,6 +8139,7 @@ Object.assign(ICON, {
   star: '<path d="M12 3.2l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.5l6-.7z"/>',
   bolt: '<path d="M13.5 2.5L5 13.5h6.2L10 21.5l8.8-11.2h-6.3z"/>',
   coin: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/>',
+  cannon: '<path d="M4 15.6l12.4-6 2.1 4.2-12.4 6z"/><path d="M10.2 12.6l2.1 4.2"/><path d="M3 21h13"/><circle cx="20.2" cy="6.6" r="1.6"/>',
   share: '<path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6.5"/>'
 });
 
@@ -7576,7 +8279,8 @@ function dayPlan(id = dayId()) {
   const tod = ['dawn', 'day', 'dusk', 'night'][Math.floor(r() * 4)], pool = DMODS.slice(), mods = [take(pool), take(pool)];
   const op = ORDERS.slice(), orders = [];
   while (orders.length < 3 && op.length) { const o = take(op); if (!orders.some(q => q.s === o.s)) orders.push(o); }
-  return (PLANS[id] = { id, tod, mods, orders });
+  const wx = ['clear', 'clear', 'rain', 'storm', 'mist'][Math.floor(r() * 5)]; // drawn last, so the day's rules and orders stay as they were
+  return (PLANS[id] = { id, tod, mods, orders, wx });
 }
 function syncDay() { const P = META.P, id = dayId(); if (P.day.id !== id) P.day = { id, prog: {}, got: [], all: false, best: 0, done: false }; }
 function bump(stat, n = 1, max) {
@@ -7609,6 +8313,7 @@ function dailyComplete() {
 const DAILY = {
   id: 'daily', arena: ARENA0, gate: true, waves: true, upgrades: true, endless: true, daily: true, stars: [],
   get tod() { return dayPlan().tod; },
+  get wx() { return dayPlan().wx; },
   setup() {
     G.dmods = dayPlan().mods.slice(); const M = G.dmods;
     setObj([['oDaily', DAILY_GOAL], ['oGate', 0]]); resetHero(-17); G.wave = 0;
@@ -7616,6 +8321,7 @@ const DAILY = {
     if (M.includes('swift')) G.foeSpd = 1.22;
     if (M.includes('nogift')) { G.noGifts = true; G.goldK = 2; }
     if (M.includes('rams')) { G.gateHp = G.gateMax * 0.75; updateGateTint(); }
+    if (M.includes('bombs')) bombardsOn({ onlyField: true, first: 9, gap: 2.4, period: [8, 12], fieldDmg: 20 }); // from across the river, at whoever rides the field
     nextWave();
   },
   post() { // after the armory, so these stack on top of it
@@ -7634,6 +8340,7 @@ function dailyWave(d0, w) {
   if (M.includes('archers')) d.archer = (d.archer || 0) * 2 + 3;
   if (M.includes('rams')) d.ram = Math.max(1, d.ram || 0) + (w >= 4 ? 1 : 0);
   if (M.includes('bosses') && w % 2 === 0) d.agha = 1;
+  if (M.includes('hark')) d.akinxhi = (d.akinxhi || 0) + 2 + (w >> 1);
   return d;
 }
 
@@ -7753,7 +8460,7 @@ function renderMenuExtras() {
 UI.armTab = 'arms';
 function openArmory(tab) {
   if (!ready) return; AU.init();
-  UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD);
+  UI.shot = null; setSky(TITLE_TOD, 'clear');
   UI.armTab = tab || UI.armTab || 'arms';
   renderArmory(); showScreen('armory', '#aTabs [aria-selected="true"]');
 }
@@ -7870,7 +8577,7 @@ function renderMedals() {
 const WD = ['e diel', 'e hënë', 'e martë', 'e mërkurë', 'e enjte', 'e premte', 'e shtunë'], MO = ['janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor', 'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor'];
 function openDaily() {
   if (!ready) return; AU.init(); syncDay();
-  const plan = dayPlan(); UI.shot = SHOTS.endless; if (ATM.tod !== plan.tod) setTimeOfDay(plan.tod);
+  const plan = dayPlan(); UI.shot = SHOTS.endless; setSky(plan.tod, plan.wx);
   renderDaily(); showScreen('daily', '#dGo');
 }
 function renderDaily() {
