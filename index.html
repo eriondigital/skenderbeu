@@ -7995,11 +7995,17 @@ async function shareResult() {
     g.shadowBlur = 0; const pw = 560, px = (W2 - pw) / 2, py = H2 - 92; const pg = g.createLinearGradient(0, py, 0, py + 64); pg.addColorStop(0, '#fbe2a0'); pg.addColorStop(0.55, '#e7b956'); pg.addColorStop(1, '#c8902f');
     g.fillStyle = pg; roundRect(g, px, py, pw, 64, 12); g.fill(); g.font = `800 38px ${U}`; g.fillStyle = '#3a0b07'; g.fillText(t('shPlay') + ': skenderbeu.fun', W2 / 2, py + 45);
     const blob = await new Promise(r => c.toBlob(r, 'image/png')); if (!blob) throw new Error('no image');
-    const file = new File([blob], 'skenderbeu.png', { type: 'image/png' });
+    const file = new File([blob], 'skenderbeu.png', { type: 'image/png' }), saved = () => { btn.querySelector('span').textContent = t('shareSaved'); setTimeout(() => { btn.querySelector('span').textContent = t('share'); }, 2600); };
+    // phones: the share sheet, straight to TikTok, Instagram or a chat
     if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: t('shareText') }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    // inside the claude.ai viewer a page saves files only through its downloads capability
+    if (window.claude && typeof window.claude.use === 'function') {
+      const dl = await window.claude.use('downloads').catch(() => null);
+      if (dl) { try { await dl.save({ filename: 'skenderbeu.png', data: blob }); saved(); } catch (e) { if (e && e.code !== 'declined') console.warn(e); } return; }
+    }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'skenderbeu.png'; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-    btn.querySelector('span').textContent = t('shareSaved'); setTimeout(() => { btn.querySelector('span').textContent = t('share'); }, 2600);
+    saved();
   } catch (e) { console.warn(e); }
   finally { delete btn.dataset.busy; }
 }
