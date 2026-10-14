@@ -216,7 +216,6 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;transform:rotate(45de
 /* support the game: gold coins that open PayPal with the amount filled in */
 .give{display:flex;align-items:center;gap:9px;width:max-content;margin:16px auto 0;padding:6px 2px;font-size:15.5px;font-weight:700;color:#ffe2a0;border-bottom:1px solid rgba(224,176,79,.45)}
 .give:hover,.give:focus-visible{color:#fff3cf;border-color:var(--ari);outline:none}
-#end .give{margin:20px 0 0}
 .coin-ic{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;font-size:12.5px;font-weight:800;color:#5a3a0e;
   background:radial-gradient(circle at 35% 30%,#ffe9ae,#e0b04f 60%,#a8792b);box-shadow:inset 0 0 0 1.5px rgba(90,58,14,.55)}
 #donate .flag{width:min(450px,100%)}
@@ -275,10 +274,10 @@ a.pri{display:inline-block;text-decoration:none}
 .ups.done kbd{display:none}
 
 /* results */
-#end .flag{width:min(480px,100%)}
+#end .flag{width:min(560px,100%)}
 .verdict{font-family:var(--f-d);font-style:italic;font-weight:600;font-size:22px;color:#ffe2a0;margin:0 0 4px}
-.bigstars{display:flex;gap:12px;margin:18px 0 6px}
-.bigstars svg{width:46px;height:46px}
+.bigstars{display:flex;gap:12px;margin:16px 0 6px}
+.bigstars svg{width:42px;height:42px}
 .bigstars svg{animation:starIn .5s cubic-bezier(.2,1.5,.4,1) both}
 .bigstars svg:nth-child(2){animation-delay:.25s}.bigstars svg:nth-child(3){animation-delay:.5s}
 @keyframes starIn{from{transform:scale(.2) rotate(-40deg);opacity:0}to{transform:none;opacity:1}}
@@ -356,7 +355,7 @@ a.pri{display:inline-block;text-decoration:none}
 #streak{position:absolute;right:calc(20px + var(--sa-r));top:34%;text-align:right;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,.85)}
 #streak b{display:block;font-family:var(--f-d);font-weight:700;font-size:54px;line-height:.9;color:#f0c35a}
 #streak span{font-size:14px;font-weight:700}
-#streak.pop b{animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
+#streak.pop b{animation:pop .28s cubic-bezier(.2,1.6,.4,1);transform-origin:right center}
 @keyframes pop{from{transform:scale(1.45)}to{transform:none}}
 #gateInd{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;display:grid;place-items:center;pointer-events:none;animation:pulse 1s ease-in-out infinite}
 #gateInd svg{width:28px;height:28px;fill:#f0c35a;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
@@ -413,6 +412,157 @@ a.pri{display:inline-block;text-decoration:none}
 #bAtk{background:radial-gradient(circle at 40% 32%,#c8352a,#6a110d 78%)}
 #bAtk.charging{box-shadow:inset 0 0 0 2px #f0c35a,0 0 0 calc(var(--ch,0)*6px) rgba(240,195,90,.55)}
 .act .pips{top:2px;right:2px}
+
+/* ---------- between battles: gold, levels, the armory, the day's challenge, medals ---------- */
+.duk{display:inline-block;flex:none;width:1em;height:1em;border-radius:50%;vertical-align:-.14em;
+  background:radial-gradient(circle at 34% 28%,#fff3cc,#efc66c 40%,#c1913a 72%,#7c561c);box-shadow:inset 0 0 0 .08em rgba(104,68,16,.8),inset 0 0 0 .17em rgba(255,240,190,.28)}
+.lvl{position:relative;flex:none;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(circle at 40% 32%,#c22a22,#6e110d 78%);box-shadow:0 0 0 2px #d9a640,0 0 0 3.5px rgba(40,6,4,.65),0 4px 12px rgba(0,0,0,.5)}
+.lvl b{font-family:var(--f-d);font-weight:700;font-size:23px;line-height:1;color:#fff3d6;font-variant-numeric:lining-nums;text-shadow:0 1px 0 rgba(40,6,4,.6)}
+.lvl.lvup{animation:lvlUp .8s cubic-bezier(.2,1.5,.4,1)}
+@keyframes lvlUp{30%{transform:scale(1.35);box-shadow:0 0 0 2px #fff0c0,0 0 0 4px rgba(40,6,4,.65),0 0 26px 6px rgba(240,195,90,.85)}}
+.xbar{position:relative;display:block;height:5px;border-radius:3px;background:rgba(10,6,5,.62);box-shadow:inset 0 0 0 1px rgba(255,236,200,.12);overflow:hidden}
+.xbar>i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#9a6f22,#f0c35a)}
+.dot{display:none;width:8px;height:8px;margin-left:12px;transform:rotate(45deg);vertical-align:.2em;background:#f0c35a;box-shadow:0 0 10px rgba(240,195,90,.9);animation:dotP 1.6s ease-in-out infinite}
+.new .dot{display:inline-block}
+@keyframes dotP{50%{opacity:.4}}
+/* the profile on the title: level seal, rank, experience, purse */
+.prof{position:absolute;z-index:4;top:max(6vh,calc(16px + var(--sa-t)));right:max(5.5vw,calc(30px + var(--sa-r)));display:flex;align-items:center;gap:13px;padding:6px 4px 6px 6px;text-align:left;
+  opacity:0;pointer-events:none;transition:opacity .6s ease;outline:none}
+#title.inmenu .prof{opacity:1;pointer-events:auto}
+#title.inmenu.enter .prof{transition-delay:1.15s}
+.prof .pt{display:grid;gap:6px;min-width:150px}
+.prof .ptn{font-family:var(--f-d);font-weight:700;font-size:23px;line-height:1;color:#fff8eb;text-shadow:0 2px 12px rgba(0,0,0,.85)}
+.prof .pg{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:800;color:#ffe2a0;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.prof .pg .duk{font-size:16px}
+.prof:hover .ptn,.prof:focus-visible .ptn{color:#ffe2a0}
+.prof:focus-visible{outline:2px solid var(--ari);outline-offset:4px}
+/* the purse in battle, and the coins flying to it */
+#goldBox{display:flex;align-items:center;gap:6px;padding:3px 11px 4px 5px;border-radius:13px;background:rgba(10,6,5,.52);box-shadow:inset 0 0 0 1px rgba(224,176,79,.4);font-size:15px;font-weight:800;color:#ffe2a0;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+#goldBox .duk{font-size:17px}
+#goldBox.pop .duk{animation:gpop .3s cubic-bezier(.2,1.6,.4,1)}
+@keyframes gpop{40%{transform:scale(1.5)}}
+.fcoin{position:absolute;left:0;top:0;font-size:17px;margin:-8px 0 0 -8px;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.ebar.el{box-shadow:0 0 0 1px rgba(240,195,90,.8),0 0 8px rgba(240,195,90,.5)} .ebar.el i{background:linear-gradient(90deg,#9a6f22,#f6d686)}
+#streak.tier span{display:block;margin-top:2px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:26px;line-height:1.05;color:#ffe2a0}
+#streak.tierIn span{animation:tierIn .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes tierIn{from{transform:scale(1.7);opacity:0}to{transform:none;opacity:1}}
+/* toasts: a medal, an order, a new level, the moment it happens */
+#toasts{position:absolute;z-index:16;left:calc(16px + var(--sa-l));top:40%;display:grid;gap:8px;width:min(290px,calc(100vw - 32px));pointer-events:none}
+#toasts.top{top:calc(16px + var(--sa-t));left:50%;transform:translateX(-50%)}
+.toast{display:grid;grid-template-columns:38px 1fr auto;gap:0 11px;align-items:center;padding:8px 14px 9px 8px;border-radius:3px;
+  background:linear-gradient(90deg,rgba(22,9,6,.95),rgba(22,9,6,.82));box-shadow:inset 0 0 0 1px rgba(224,176,79,.55),0 10px 24px rgba(0,0,0,.45);animation:toastIn .5s cubic-bezier(.2,.8,.2,1) both}
+.toast.out{animation:toastOut .45s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-8px)}}
+.toast .tk{display:block;font-size:12.5px;font-weight:700;line-height:1.2;color:#e8bd5f}
+.toast .tn{display:block;font-family:var(--f-d);font-weight:700;font-size:20px;line-height:1.1;color:#fff8eb}
+.toast .tg{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:800;color:#ffe2a0;white-space:nowrap}
+.ms{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#f6d686,#c0913a 62%,#6e4a14);box-shadow:0 0 0 1.5px #fff0c0,0 0 0 3px rgba(40,6,4,.55),0 3px 8px rgba(0,0,0,.5)}
+.ms svg{width:20px;height:20px;stroke:#3b0b08;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* the armory */
+#armory .flag,#daily .flag{width:min(510px,100%)}
+.purse{display:flex;align-items:baseline;gap:8px;margin:14px 0 0;font-size:15px;color:rgba(244,239,229,.78)}
+.purse .duk{font-size:22px;align-self:center}
+.purse b{font-family:var(--f-d);font-weight:700;font-size:30px;line-height:1;color:#ffe2a0}
+.tabs{display:flex;gap:26px;margin:14px 0 2px;border-bottom:1px solid rgba(244,239,229,.14)}
+.tabs button{position:relative;padding:6px 0 8px;font-family:var(--f-d);font-weight:600;font-size:23px;line-height:1.1;color:rgba(244,239,229,.58);outline:none}
+.tabs button[aria-selected="true"]{color:#fff8eb}
+.tabs button::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ari);transform:scaleX(0);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.tabs button[aria-selected="true"]::after{transform:scaleX(1)}
+.tabs button:hover,.tabs button:focus-visible{color:#ffe2a0}
+.tabs .dot{width:7px;height:7px;margin-left:8px}
+.arms{display:grid;margin-top:2px}
+.arm{position:relative;isolation:isolate;display:grid;grid-template-columns:50px 1fr auto;gap:1px 14px;align-items:center;width:100%;text-align:left;padding:11px 4px 12px;border-top:1px solid rgba(244,239,229,.1);outline:none}
+.arm:first-child{border-top:0}
+.arm::after,.sw::after{content:"";position:absolute;inset:0 -14px;z-index:-1;transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.2,.8,.2,1);background:linear-gradient(90deg,rgba(150,24,19,.9),rgba(150,24,19,.6) 55%,rgba(150,24,19,0))}
+.arm:focus::after{transform:scaleX(1)}
+.arm .seal{grid-row:1/span 3;width:48px;height:48px;margin:0}
+.arm .seal svg{width:24px;height:24px} .arm .seal::after{inset:4px}
+.arm .an{font-family:var(--f-d);font-weight:600;font-size:24px;line-height:1.05}
+.arm .rank{justify-content:flex-start;margin:4px 0 2px;gap:6px}
+.arm .rank i{width:8px;height:8px}
+.arm .av{display:flex;flex-wrap:wrap;align-items:center;gap:2px 7px;font-size:14px;line-height:1.3;color:rgba(244,239,229,.8)}
+.arm .av b{font-weight:800;color:#ffe2a0}
+.arm .av svg{width:18px;height:10px;stroke:#e0b04f;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.price{grid-column:3;grid-row:1/span 3;display:grid;justify-items:end;gap:3px;font-size:17px;font-weight:800;color:#ffe2a0}
+.price span{display:flex;align-items:center;gap:6px}
+.price small{font-size:12.5px;font-weight:700;color:rgba(244,239,229,.62)}
+.arm.short .price span{color:rgba(244,239,229,.55)}
+.arm.full .an{color:#ffe2a0}
+.arm.bought .seal{animation:bought .75s cubic-bezier(.2,1.5,.4,1)}
+@keyframes bought{30%{transform:scale(1.25);box-shadow:0 0 0 2px #fff0c0,0 0 0 4px rgba(46,8,5,.6),0 0 26px rgba(240,195,90,.9)}}
+.nope{animation:nope .35s ease}
+@keyframes nope{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.lkh{margin:12px 0 0;max-width:44ch;font-size:14px;color:rgba(244,239,229,.74)}
+#aLooks .h3{margin-top:16px}
+.swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 8px;margin-top:2px}
+.sw{position:relative;isolation:isolate;display:grid;justify-items:center;gap:5px;padding:12px 4px 10px;text-align:center;outline:none}
+.sw::after{inset:0;border-radius:3px;background:rgba(150,24,19,.72)}
+.sw:focus::after{transform:scaleX(1)}
+.sw canvas{width:48px;height:48px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(244,239,229,.3),0 4px 10px rgba(0,0,0,.5)}
+.sw.s-on canvas{box-shadow:0 0 0 2px #f0c35a,0 0 0 4px rgba(40,6,4,.75),0 0 18px rgba(240,195,90,.6)}
+.sw .sn{font-family:var(--f-d);font-weight:600;font-size:19px;line-height:1.05}
+.sw .sp{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:rgba(244,239,229,.72)}
+.sw.s-on .sp,.sw.s-buy .sp{color:#ffe2a0}
+.sw.lock canvas{filter:grayscale(.75) brightness(.55)} .sw.lock .sn{color:rgba(244,239,229,.6)}
+.meds{list-style:none;margin:4px 0 0;padding:0;display:grid}
+.meds li{display:grid;grid-template-columns:40px 1fr auto;gap:0 13px;align-items:center;padding:9px 2px;border-top:1px solid rgba(244,239,229,.08)}
+.meds li:first-child{border-top:0}
+.meds .ms{width:36px;height:36px} .meds .ms svg{width:18px;height:18px}
+.meds li.off .ms{background:rgba(244,239,229,.05);box-shadow:inset 0 0 0 1.5px rgba(244,239,229,.25)} .meds li.off .ms svg{stroke:rgba(244,239,229,.45)}
+.meds b{display:block;font-family:var(--f-d);font-weight:700;font-size:19px;line-height:1.1}
+.meds li.off b{color:rgba(244,239,229,.78)}
+.meds span span{font-size:13.5px;color:rgba(244,239,229,.7)}
+.meds .mg{font-size:13.5px;font-weight:800;color:#ffe2a0;white-space:nowrap;text-align:right}
+.meds li.off .mg{color:rgba(244,239,229,.55)}
+/* the daily challenge */
+.mods{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:12px}
+.mods li{display:grid;grid-template-columns:46px 1fr;gap:0 13px;align-items:center}
+.mods .seal{width:44px;height:44px;margin:0} .mods .seal svg{width:22px;height:22px} .mods .seal::after{inset:4px}
+.mods b{display:block;font-family:var(--f-d);font-weight:700;font-size:21px;line-height:1.1}
+.mods span span{font-size:14px;line-height:1.3;color:rgba(244,239,229,.8)}
+#daily .chron{font-size:19px;margin-top:10px}
+#daily .h3{margin-top:16px}
+#dInfo{margin-top:16px}
+.stats .st b .duk{font-size:.72em;margin-right:6px;vertical-align:-.04em}
+.orders{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:8px}
+.orders li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline;font-size:15px}
+.orders .op{font-size:13.5px;font-weight:800;color:#ffe2a0;white-space:nowrap}
+.orders .xbar{grid-column:1/-1;height:3px}
+.orders li.done{color:rgba(244,239,229,.62)} .orders li.done .op{color:#a6e08f}
+.ordb{margin:10px 0 0;font-size:14px;color:rgba(244,239,229,.75)}
+/* results: the battle in numbers, then what it earned */
+.stats{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:16px}
+.stats .st{display:grid;gap:2px}
+.stats .st b{font-family:var(--f-d);font-weight:700;font-size:27px;line-height:1;color:#fff8eb}
+.stats .st span{font-size:13px;color:rgba(244,239,229,.72)}
+.rew{margin-top:16px;padding-top:14px;border-top:1px solid rgba(224,176,79,.3)}
+.rgain{display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline}
+.rgain>span{display:flex;align-items:baseline;gap:7px}
+.rgain .duk{font-size:24px;align-self:center}
+.rgain b{font-family:var(--f-d);font-weight:700;font-size:32px;line-height:1;color:#ffe2a0}
+.rgain .rx b{color:#fff8eb}
+.rgain small{font-size:14px;color:rgba(244,239,229,.75)}
+.rlvl{display:flex;align-items:center;gap:13px;margin-top:12px}
+.rlt{flex:1;max-width:310px;display:grid;gap:6px}
+.rlh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13.5px;color:rgba(244,239,229,.75)}
+.rlh span:first-child{font-family:var(--f-d);font-weight:700;font-size:20px;color:#fff8eb}
+.rlist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:7px 8px}
+.rlist li{display:flex;align-items:center;gap:7px;padding:4px 11px 5px 5px;border-radius:15px;font-size:13.5px;font-weight:700;background:rgba(224,176,79,.12);box-shadow:inset 0 0 0 1px rgba(224,176,79,.5);animation:chipIn .45s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d,0s)}
+.rlist .ms{width:22px;height:22px;box-shadow:none} .rlist .ms svg{width:13px;height:13px}
+.rlist b{color:#ffe2a0}
+@keyframes chipIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.rnext{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:14px;color:rgba(244,239,229,.84)}
+.rnext .xbar{flex:none;width:84px}
+#end .slist{gap:2px} #end .slist li{font-size:14px}
+#end .acts{margin-top:18px;gap:10px 18px}
+#end .stats{margin-top:14px} #end .rew{margin-top:14px;padding-top:12px} #end .rlist{margin-top:10px} #end .rnext{margin-top:9px}
+#end .quote{margin-top:16px}
+.acts .dot{margin-left:9px}
+.links{display:flex;flex-wrap:wrap;gap:6px 26px;margin-top:18px}
+.links .give{margin:0}
+.give svg{width:20px;height:20px;stroke:#ffe2a0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* fade, motion */
 #fade{position:absolute;inset:0;background:#170504;pointer-events:none;opacity:0;transition:opacity .5s ease;z-index:20}
@@ -476,7 +626,44 @@ a.pri{display:inline-block;text-decoration:none}
   .keys{display:none}
   .press,#title .status{bottom:calc(9vh + 16px)}
 }
+@media (max-width:640px){
+  .arm{grid-template-columns:44px 1fr auto;gap:1px 12px} .arm .seal{width:42px;height:42px} .arm .seal svg{width:21px;height:21px} .arm .an{font-size:21px}
+  .tabs{gap:20px} .tabs button{font-size:21px}
+  .sw canvas{width:44px;height:44px} .sw .sn{font-size:17px}
+  .stats{gap:6px 20px} .stats .st b{font-size:24px} .rgain b{font-size:28px}
+  #toasts{top:calc(132px + var(--sa-t));width:min(270px,calc(100vw - 32px))} #toasts.top{top:calc(12px + var(--sa-t))}
+  .toast{grid-template-columns:32px 1fr auto;gap:0 9px;padding:6px 11px 7px 6px} .toast .ms{width:32px;height:32px} .toast .ms svg{width:17px;height:17px} .toast .tn{font-size:17px} .toast .tk{font-size:12px} .toast .tg{font-size:14px}
+  .mods b{font-size:19px}
+}
+@media (orientation:portrait) and (max-width:820px){
+  .prof{top:auto;bottom:calc(14px + var(--sa-b));right:calc(18px + var(--sa-r));gap:10px;padding:4px}
+  .prof .lvl{width:40px;height:40px} .prof .lvl b{font-size:20px}
+  .prof .pt{min-width:96px;gap:4px} .prof .ptn{font-size:19px} .prof .pg{font-size:14px}
+  .tmenu{grid-template-columns:1fr 1fr}
+  .tmenu>button{grid-column:1/-1}
+  #mGallery,#mSettings{grid-column:auto}
+  #mCampaign .md,#mEndless .md,#mArmory .md,#mGallery .md,#mSettings .md{display:none}
+  #mGallery .mi,#mSettings .mi{font-size:clamp(21px,5.6vw,27px)}
+  /* the looks: the codex sinks to the lower half so the hero stays in sight above it */
+  #armory.peek{background:linear-gradient(180deg,rgba(7,4,3,0) 0,rgba(7,4,3,0) 34%,rgba(7,4,3,.82) 50%,rgba(7,4,3,.92));padding-top:calc(44vh + var(--sa-t))}
+  #armory.peek h2,#armory.peek .purse{text-shadow:0 2px 14px rgba(0,0,0,.9)}
+}
+@media (max-height:520px){
+  .prof{top:max(4vh,calc(10px + var(--sa-t)))} .prof .lvl{width:38px;height:38px} .prof .lvl b{font-size:19px} .prof .ptn{font-size:19px}
+  .tabs button{font-size:20px} .arm{padding:7px 4px 8px} .stats .st b{font-size:22px}
+}
+@media (max-height:760px) and (min-width:641px){
+  #end .quote{display:none}
+}
+/* short laptop screens: the gallery and the settings share a row so the menu clears the name */
+@media (max-height:700px) and (min-height:521px) and (min-width:641px){
+  .tmenu{grid-template-columns:1fr 1fr;bottom:calc(78px + var(--sa-b))}
+  .tmenu>button{grid-column:1/-1;padding-top:4px;padding-bottom:5px}
+  #mGallery,#mSettings{grid-column:auto}
+  .tmenu .mi{font-size:clamp(22px,4.4vh,30px)}
+}
 @media (prefers-reduced-motion:reduce){
+  .toast,.rlist li,.dot,.lvl.lvup,#goldBox.pop .duk,.arm.bought .seal,.nope,#streak.tierIn span{animation:none}
   #title .lb,#title .scrimL,.tfoot{transition:none} #title.inmenu .tmenu>button{opacity:1;transform:none}
   .press,#title .tmenu>button,.screen:not([hidden]) .flag,.bigstars svg,#objList li.fresh,#hint,#ups .up .flag,.rank i.nx,.perk.new,.ab.rdy .o::before,.act.rdy::before{animation:none} .up kbd{animation:none;opacity:1} .coin{transition:none}
   #banner.on{animation-timing-function:steps(2)} .bar i{transition:none}
@@ -504,6 +691,7 @@ a.pri{display:inline-block;text-decoration:none}
         <canvas id="mini" width="184" height="184"></canvas>
         <button class="hbtn" id="pauseBtn"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
       </div>
+      <div id="goldBox" class="num" aria-label="Dukatë në këtë betejë"><i class="duk"></i><b id="goldN">0</b></div>
     </div>
     <div id="banner"><div class="b1"></div><div class="b2"></div></div>
     <div id="boss" hidden><div class="bn" id="bossName"></div><div class="bar boss"><i class="fill" id="bossBar"></i></div></div>
@@ -517,6 +705,7 @@ a.pri{display:inline-block;text-decoration:none}
   </div>
 
   <div id="fade"></div>
+  <div id="toasts" aria-live="polite"></div>
 
   <section id="title" class="screen card">
     <div class="scrim"></div><div class="scrimL"></div>
@@ -529,10 +718,13 @@ a.pri{display:inline-block;text-decoration:none}
     <p class="press" id="press" hidden><span></span></p>
     <p class="status" id="loading" data-i18n="loading" hidden></p>
     <p class="status err" id="glErr" hidden></p>
+    <button class="prof" id="prof" type="button"><span class="lvl"><b id="pLvl">1</b></span><span class="pt"><span class="ptn" id="pTitle"></span><i class="xbar"><i id="pXp"></i></i><span class="pg num"><i class="duk"></i><b id="pGold">0</b></span></span></button>
     <nav class="tmenu" id="mainMenu" aria-label="Menyja kryesore">
       <button id="mContinue" hidden><span class="mi" data-i18n="mContinue"></span><span class="md" id="mContinueD"></span></button>
       <button id="mCampaign"><span class="mi" data-i18n="mCampaign"></span><span class="md" data-i18n="mCampaignD"></span></button>
+      <button id="mDaily"><span class="mi"><span data-i18n="mDaily"></span><i class="dot" aria-hidden="true"></i></span><span class="md" id="mDailyD"></span></button>
       <button id="mEndless"><span class="mi" data-i18n="mEndless"></span><span class="md" data-i18n="mEndlessD"></span></button>
+      <button id="mArmory"><span class="mi"><span data-i18n="mArmory"></span><i class="dot" aria-hidden="true"></i></span><span class="md" data-i18n="mArmoryD"></span></button>
       <button id="mGallery"><span class="mi" data-i18n="gallery"></span><span class="md" data-i18n="mGalleryD"></span></button>
       <button id="mSettings"><span class="mi" data-i18n="settings"></span><span class="md" data-i18n="mSettingsD"></span></button>
     </nav>
@@ -605,10 +797,50 @@ a.pri{display:inline-block;text-decoration:none}
       <h2 id="endTitle"></h2>
       <div class="bigstars" id="endStars"></div>
       <ul class="slist" id="endCrit"></ul>
-      <dl class="tally num" id="endTally"></dl>
-      <p class="quote" id="endQuote"></p>
+      <div class="stats num" id="endTally"></div>
+      <div class="rew" id="endRew" hidden>
+        <div class="rgain"><span class="rg"><i class="duk"></i><b class="num" id="rGold">+0</b><small data-i18n="rGold"></small></span><span class="rx"><b class="num" id="rXp">+0</b><small data-i18n="rXp"></small></span></div>
+        <div class="rlvl"><span class="lvl" id="rLvlB"><b id="rLvl">1</b></span><div class="rlt"><div class="rlh"><span id="rTitle"></span><span class="num" id="rXpT"></span></div><i class="xbar"><i id="rBar"></i></i></div></div>
+        <ul class="rlist" id="rList"></ul>
+        <p class="rnext" id="rNext"></p>
+      </div>
       <div class="acts" id="endActs"></div>
-      <button class="give" id="endDonate" hidden><span class="coin-ic" aria-hidden="true">€</span><span data-i18n="donateEnd">Të pëlqeu? Mbështet lojën</span></button>
+      <p class="quote" id="endQuote"></p>
+      <div class="links">
+        <button class="give" id="endShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6.5"/></svg><span data-i18n="share">Ndaje</span></button>
+        <button class="give" id="endDonate" hidden><span class="coin-ic" aria-hidden="true">€</span><span data-i18n="donateEnd">Të pëlqeu? Mbështet lojën</span></button>
+      </div>
+    </div></div>
+  </section>
+
+  <section id="armory" class="screen hang dim" hidden>
+    <div class="flag"><div class="cloth">
+      <h2 data-i18n="armory">Armatimi</h2>
+      <p class="purse"><i class="duk"></i><b class="num" id="aGold">0</b><span data-i18n="gold">dukatë</span></p>
+      <div class="tabs" id="aTabs" role="tablist">
+        <button role="tab" data-tab="arms" aria-controls="aArms"><span data-i18n="tArms">Armët</span></button>
+        <button role="tab" data-tab="looks" aria-controls="aLooks"><span data-i18n="tLooks">Pamja</span></button>
+        <button role="tab" data-tab="medals" aria-controls="aMedals"><span data-i18n="tMedals">Medaljet</span><i class="dot" aria-hidden="true"></i></button>
+      </div>
+      <div class="arms" id="aArms" role="tabpanel"></div>
+      <div id="aLooks" role="tabpanel" hidden></div>
+      <div id="aMedals" role="tabpanel" hidden></div>
+      <div class="acts"><button class="sec" id="aBack" data-i18n="back">Kthehu</button></div>
+    </div></div>
+  </section>
+
+  <section id="daily" class="screen hang dim" hidden>
+    <div class="flag"><div class="cloth">
+      <p class="when" id="dWhen"></p>
+      <h2 data-i18n="daily">Sfida e ditës</h2>
+      <p class="chron" id="dText"></p>
+      <div class="h3" data-i18n="dRules">Rregullat e sotme</div>
+      <ul class="mods" id="dMods"></ul>
+      <div class="stats num" id="dInfo"></div>
+      <div class="h3" data-i18n="orders">Urdhrat e ditës</div>
+      <ul class="orders" id="dOrders"></ul>
+      <p class="ordb" id="dBonus"></p>
+      <div class="acts"><button class="pri" id="dGo" data-i18n="toBattle">Në betejë</button><button class="sec" id="dBack" data-i18n="back">Kthehu</button></div>
     </div></div>
   </section>
 
@@ -1142,6 +1374,7 @@ uniform float uUseTex, uTwo, uA, uOut, uTime; uniform vec4 uPL[4]; uniform vec4 
 uniform sampler2DArray uGA, uGN, uWA, uWN;
 uniform samplerCube uEnvMap; uniform float uEnvK, uEnvLod, uFade;
 uniform vec3 uVar; // per figure: pattern seed, mud amount, height of the ground in the bind pose
+uniform vec4 uBan, uCoat, uHair; // the hero's chosen colours: banner cloth (rgb, on), horse coat (rgb, dapple), mane (rgb, leg shading; 0 = off)
 uniform vec2 uDith;
 out vec4 o;
 ${GLSL_NOISE}
@@ -1228,6 +1461,19 @@ void main(){
   float patchV = vn3(so * 2.7) * .6 + vn3(so * 8.3) * .4;
   vec3 an = abs(normalize(vON)); an = an * an * an; an /= an.x + an.y + an.z;
   float far = clamp(length(fwidth(vO)) * 240., 0., 1.); // threads finer than a pixel fade to their average
+#endif
+  float dapK = 1.;
+#ifdef SKIN
+  // the colours the player chose: the banner colour takes the place of the Kastrioti red, and the horse gets a new coat and mane
+  if (uBan.w > .5 && (kind == 0. || kind == 18.)) {
+    float red = smoothstep(3., 6., base.r / max(max(base.g, base.b), .003)) * smoothstep(.03, .1, base.r);
+    base = mix(base, uBan.rgb * clamp(base.r / .32, .2, 1.6), red);
+  }
+  if (uHair.w > 0.) {
+    float lum = dot(base, vec3(.3, .55, .15));
+    if (kind == 9.) { base = uCoat.rgb * pow(clamp(lum / .561, .02, 1.5), uHair.w); dapK = uCoat.w; }
+    else if (kind == 10.) base = uHair.rgb * clamp(lum / .841, .2, 1.3);
+  }
 #endif
   if (kind == 0.) {
     base *= .9 + .16 * vn3(vO * 34.); rough = .86;
@@ -1398,7 +1644,7 @@ void main(){
       vec3 q = vO * 10.5, iq = floor(q), fq = fract(q); float md = 8.;
       for (int z = -1; z <= 1; z++) for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec3 g = vec3(float(x), float(y), float(z)), r = g + h33(iq + g) - fq; md = min(md, dot(r, r)); }
       float dap = smoothstep(.1, .5, sqrt(md));
-      base *= mix(1.1, .72, dap);
+      base *= mix(1., mix(1.1, .72, dap), dapK);
     }
     base *= .93 + .12 * vn(vec2(vO.x * 60. + vO.z * 20., vO.y * 220.));
   }
@@ -2535,15 +2781,17 @@ function skinLod(n, shadow) {
   const dx = n.w[12] - CAM.eye[0], dy = n.w[13] - CAM.eye[1], dz = n.w[14] - CAM.eye[2];
   return dx * dx + dy * dy + dz * dz < s.lodDist * s.lodDist ? L[0] : L[L.length - 1];
 }
+const LOOK0 = { ban: new Float32Array(4), coat: new Float32Array(4), hair: new Float32Array(4) };
 function drawSkins() {
   if (!skinQ.length) return;
-  litUniforms(P.litSk); const u = P.litSk.u;
+  litUniforms(P.litSk); const u = P.litSk.u; let lk0 = null;
   for (let i = 0; i < skinQ.length; i += 4) {
     const n = skinQ[i], t = skinQ[i + 1], e = skinQ[i + 2], f = skinQ[i + 3], m = skinLod(n, false);
     gl.uniformMatrix4fv(u.uB, false, skinMats(n.skin));
     if (f !== _lf) { gl.uniform1f(u.uFade, f); _lf = f; }
     const v = n.skin.v || ZERO3; if (v !== _lv) { gl.uniform3fv(u.uVar, v); _lv = v; }
     const ra = n.skin.hero ? .22 : .6; if (ra !== _la) { gl.uniform1f(u.uA, ra); _la = ra; }
+    const lk = n.skin.look || LOOK0; if (lk !== lk0 && u.uBan) { gl.uniform4fv(u.uBan, lk.ban); gl.uniform4fv(u.uCoat, lk.coat); gl.uniform4fv(u.uHair, lk.hair); lk0 = lk; }
     if (t !== _lt) { gl.uniform3fv(u.uTint, t); _lt = t; }
     if (e !== _le) { gl.uniform3fv(u.uEmis, e); _le = e; }
     gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_SHORT, 0);
@@ -4402,6 +4650,7 @@ function makeMountedRig(horse, rider, o = {}) {
     const dm = planeMesh(0.5, 0.5, 1, 1, eagleTex);
     const dL = hs.sockets.decalL.add(new Node(dm)); dL.r[1] = PI / 2; dL.at(0, 0.25, 0.25);
     const dR = hs.sockets.decalR.add(new Node(dm)); dR.r[1] = -PI / 2; dR.at(0, 0.25, -0.25);
+    rig.decals = [dL, dR];
   }
   // the rein hand rests low over the withers, a fist's height above the pommel
   rig.armL.r = [-0.25, -0.7, 0.25]; rig.foreL.r[0] = -0.8; rig.foreR.r[0] = -0.4;
@@ -4535,24 +4784,25 @@ let CLOTH_DT = 0;
 const _crw = t => { const t2 = t * t, t3 = t2 * t; return [(-t3 + 2 * t2 - t) * .5, (3 * t3 - 5 * t2 + 2) * .5, (-3 * t3 + 4 * t2 + t) * .5, (t3 - t2) * .5]; };
 /* linear-space cape textures: woven cloth, gold border, optional eagle; a white strip on the right for the lining */
 const CAPE_TEX = {};
-function capeTex(kind) {
-  if (CAPE_TEX[kind]) return CAPE_TEX[kind];
+function capeTex(kind, pal) {
+  const key = kind + (pal ? ':' + pal.id : '');
+  if (CAPE_TEX[key]) return CAPE_TEX[key];
   const W = 256, Hh = 384, cv = document.createElement('canvas'); cv.width = W + 16; cv.height = Hh;
   const g = cv.getContext('2d'), hero = kind === 'hero';
   g.fillStyle = '#fff'; g.fillRect(W, 0, 16, Hh);
-  const base = hero ? [86, 5, 4] : [58, 5, 6], img = g.createImageData(W, Hh), d = img.data;
+  const base = pal ? pal.base : hero ? [86, 5, 4] : [58, 5, 6], img = g.createImageData(W, Hh), d = img.data;
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) {
     const k = (y * W + x) * 4, weave = 0.9 + 0.1 * Math.sin(x * 2.1) * Math.sin(y * 2.3) + 0.06 * Math.sin(x * 0.11 + y * 0.03), v = 1 - y / Hh * 0.18;
     d[k] = base[0] * weave * v; d[k + 1] = base[1] * weave * v; d[k + 2] = base[2] * weave * v; d[k + 3] = 255;
   }
   g.putImageData(img, 0, 0);
-  const gold = '#a8701c', dk = '#2a0402';
+  const gold = pal && pal.gold || '#a8701c', dk = pal && pal.dk || '#2a0402';
   g.fillStyle = gold; g.fillRect(0, 0, 12, Hh); g.fillRect(W - 12, 0, 12, Hh); g.fillRect(0, Hh - 16, W, 16);
   g.fillStyle = dk; g.fillRect(12, 0, 2, Hh - 16); g.fillRect(W - 14, 0, 2, Hh - 16); g.fillRect(12, Hh - 18, W - 24, 2);
   g.fillStyle = gold;
   for (let y = 10; y < Hh - 24; y += 22) { g.beginPath(); g.arc(22, y, 3, 0, TAU); g.arc(W - 22, y, 3, 0, TAU); g.fill(); }
   for (let x = 30; x < W - 24; x += 22) { g.beginPath(); g.moveTo(x - 7, Hh - 24); g.lineTo(x, Hh - 33); g.lineTo(x + 7, Hh - 24); g.closePath(); g.fill(); }
-  if (hero) drawEagle(g, W / 2, Hh * 0.3, 132, '#050303');
+  if (hero) drawEagle(g, W / 2, Hh * 0.3, 132, pal && pal.eagle || '#050303');
   else {
     g.globalAlpha = 0.5;
     for (let y = 40; y < Hh - 40; y += 46) for (let x = 40 + (y / 46 % 2) * 23; x < W - 30; x += 46) {
@@ -4560,7 +4810,7 @@ function capeTex(kind) {
     }
     g.globalAlpha = 1;
   }
-  return (CAPE_TEX[kind] = makeTex(cv));
+  return (CAPE_TEX[key] = makeTex(cv));
 }
 class Cloth {
   /* o: anchor (bone node), top(t) -> anchor-local point for t in [0,1] (left to right), len, wBot, nx, ny, sc,
@@ -4616,6 +4866,12 @@ class Cloth {
     this.mesh = { vao, count: idx.length, tex: o.tex || null, two: false, noShadow: false, rad: 2, el: true, dyn: .5 };
     this.node = new Node(this.mesh); this.node.ws = true;
     CLOTHS.push(this);
+  }
+  /* a new lining colour (linear) for the inside of the cape; the outside keeps white so the texture shows true */
+  setLining(lin) {
+    const NV = this.R.length / 3, col = new Float32Array(NV * 6);
+    for (let k = 0; k < NV; k++) { col.set([1, 1, 1], k * 3); col.set(lin, (k + NV) * 3); }
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[2]); gl.bufferSubData(gl.ARRAY_BUFFER, 0, col);
   }
   anchors(dst) {
     const w = this.o.anchor.w;
@@ -4768,7 +5024,7 @@ const PL = {
   chargeT: 0, chargeCd: 0, chargeHit: null, rearT: 0, rearCd: 0, rearAmt: 0, slammed: false, inv: 0, trail: [], hoofT: 0, twist: 0, steer: 0,
   blk: { on: false, t: 0, amt: 0 }, jav: 3, javT: 0, throwT: -1, thrown: false, minHp: 1
 };
-const JAV_MAX = 3, JAV_REGEN = 9;
+let JAV_MAX = 3; const JAV_REGEN = 9; // javelins carried (the armory adds more) and seconds to recover one
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function resetMods() { G.mods = { dmg: 1, steal: 0, speed: 1, dashCd: 2.6, spinCd: 6.5, spinR: 4.6, glory: 1, archers: 0, javRegen: 1 }; G.taken = {}; }
 function shake(a) { if (!reduceMotion) CAM.shake = Math.max(CAM.shake, a); }
@@ -4784,7 +5040,7 @@ function dust(x, z, n = 6, s = 1) {
 }
 function flash(k, c) { RS.flash = Math.max(RS.flash, reduceMotion ? k * 0.3 : k); if (c) RS.flashC = c; }
 
-const HIT = { quiet: false };
+const HIT = { quiet: false, src: '' }; // src: what dealt the blow (sword, heavy, charge, stomp, cry, jav, arrow), for medals and orders
 function hurtUnit(u, dmg, kx, kz, kb, stun, heavy) {
   if (u.dead) return;
   if (u.parried > 0 && u.team === 1) dmg *= 1.5;
@@ -4809,7 +5065,11 @@ function killUnit(u) {
     if (G.mods.steal && PL.alive) healPlayer(G.mods.steal);
     dust(u.x, u.z, u.type === 'ram' ? 18 : 8, u.type === 'ram' ? 2 : 1);
     if (u.def.boss) { shake(0.6); punch(1); flash(0.14, [1, 0.8, 0.5]); burst(u.x, u.y + 2, u.z, 24, GOLD, 7, 0.3, 0.8); G.slowT = 1.1; }
+    else if (u.elite) burst(u.x, u.y + 1.6, u.z, 18, GOLD, 5, 0.28, 0.7);
+    metaKill(u, HIT.src);
     if (MS.cur) missionKill(u);
+    // the last man of a wave falls in slow motion
+    if (MS.cur && MS.cur.waves && G.state === 'play' && !G.queue.length && !G.units.some(o => o.team === 1 && !o.dead)) { G.slowT = Math.max(G.slowT || 0, 0.9); punch(0.5); flash(0.08, [1, 0.9, 0.7]); }
   }
 }
 function healPlayer(n) { const b = PL.hp; PL.hp = Math.min(PL.maxHp, PL.hp + n); if (PL.hp - b >= 1) popNum(PL.x, PL.y + 3.2, PL.z, '+' + Math.round(PL.hp - b), 'heal'); }
@@ -4840,6 +5100,7 @@ function parry(u, sx, sz) {
     const dx = u.x - PL.x, dz = u.z - PL.z, l = Math.hypot(dx, dz) || 1; u.kbx += dx / l * 7; u.kbz += dz / l * 7;
   }
   G.glory = Math.min(100, G.glory + 6 * G.mods.glory);
+  metaEvent('parry');
   if (MS.cur) missionEvent('parry');
 }
 function blockFx(sx, sz) {
@@ -4884,7 +5145,7 @@ function throwJavelin() {
   if (best) { const d = Math.hypot(best.x - sx, best.z - sz), T = d / 31, sp = best.spd || 0; tx = best.x + Math.sin(best.face) * sp * T * 0.8; tz = best.z + Math.cos(best.face) * sp * T * 0.8; ty = best.y + (best.def.cav ? 2.1 : best.def.ram ? 1.5 : 1.25 * best.rig.root.s[0]); }
   else { tx = PL.x + fx * 26; tz = PL.z + fz * 26; ty = groundH(tx, tz) + 0.8; }
   const a = fireArrow(sx, sy, sz, tx, ty, tz, 31, 0, 70 * G.mods.dmg);
-  a.node.mesh = MODELS.javelin; a.jav = true; a.kb = 9; a.stun = 0.9; a.pierce = 1;
+  a.node.mesh = MODELS.javelin; a.jav = true; a.kb = 9; a.stun = 0.9; a.pierce = G.javPierce || 1;
   AU.swing(); if (MS.cur) missionEvent('javelin');
 }
 function nearestEnemy(x, z, maxD, dirX, dirZ) {
@@ -4919,7 +5180,7 @@ function swingHits() {
   const P = POSES[PL.atk.kind], cx = PL.x + Math.sin(PL.face) * 0.3, cz = PL.z + Math.cos(PL.face) * 0.3;
   const ang = PL.face + P.dir, dx0 = Math.sin(ang), dz0 = Math.cos(ang);
   const mom = 1 + clamp(PL.spd / 12, 0, 1) * 0.5, dmg = 30 * G.mods.dmg * P.dmg * mom;
-  let n = 0;
+  let n = 0; HIT.src = 'sword';
   for (const u of G.units) {
     if (u.team !== 1 || u.dead) continue;
     const dx = u.x - cx, dz = u.z - cz, d = Math.hypot(dx, dz);
@@ -4928,6 +5189,7 @@ function swingHits() {
     hurtUnit(u, dmg * rand(0.9, 1.1), dx + dx0, dz + dz0, P.kb, P.stun, PL.atk.kind === 2 || mom > 1.35);
     n++;
   }
+  HIT.src = '';
   if (n) { AU.hit(); G.hitStop = PL.atk.kind === 2 ? 0.075 : 0.045; shake(PL.atk.kind === 2 ? 0.32 : 0.16); punch(PL.atk.kind === 2 ? 0.32 : 0.14); }
 }
 /* hold the strike to wind up an overhead blow: damage, reach and stagger grow with the charge */
@@ -4935,7 +5197,7 @@ const HEAVY = { wind: [-3.2, 0.2, 0.1], end: [-0.5, -0.15, 0] };
 function heavyHits(ch) {
   const fx = Math.sin(PL.face), fz = Math.cos(PL.face), cx = PL.x + fx * 1.4, cz = PL.z + fz * 1.4;
   const mom = 1 + clamp(PL.spd / 12, 0, 1) * 0.35, dmg = 30 * G.mods.dmg * (1.35 + 1.1 * ch) * mom, R = 3.7 + ch * 1.5;
-  let n = 0;
+  let n = 0; HIT.src = 'heavy';
   for (const u of G.units) {
     if (u.team !== 1 || u.dead) continue;
     const dx = u.x - PL.x, dz = u.z - PL.z, d = Math.hypot(dx, dz);
@@ -4943,6 +5205,7 @@ function heavyHits(ch) {
     if (d > 1.4 && (dx * fx + dz * fz) / d < 0.08) continue;
     hurtUnit(u, dmg * rand(0.95, 1.08), dx, dz, 12 + ch * 7, 0.8 + ch * 0.7, true); n++;
   }
+  HIT.src = ''; if (n) metaEvent('heavy', n);
   AU.hit(); AU.thud(); shake(0.28 + ch * 0.3); punch(0.45 + ch * 0.55); G.hitStop = 0.06 + ch * 0.05; vibrate(30);
   dust(cx, cz, 8 + Math.round(ch * 14), 1 + ch);
   if (ch >= 0.98) { G.shock = { x: cx, z: cz, t: 0, r: R }; flash(0.12, [1, 0.86, 0.56]); burst(cx, groundH(cx, cz) + 0.4, cz, 22, GOLD, 6, 0.3, 0.5); }
@@ -5049,7 +5312,8 @@ function updatePlayer(dt) {
       const ex = u.x - p.x, ez = u.z - p.z, d = Math.hypot(ex, ez);
       if (d < 1.9 + u.r && (ex * fx + ez * fz) > -0.3) {
         p.chargeHit.add(u); const side = (ex * -fz + ez * fx) >= 0 ? 1 : -1;
-        hurtUnit(u, 24 * G.mods.dmg, fx * 1.2 - fz * side, fz * 1.2 + fx * side, u.def.ram ? 1 : 10, 0.7, true);
+        HIT.src = 'charge'; hurtUnit(u, 24 * G.mods.dmg, fx * 1.2 - fz * side, fz * 1.2 + fx * side, u.def.ram ? 1 : 10, 0.7, true); HIT.src = '';
+        metaEvent('trample', p.chargeHit.size);
         AU.hit(); shake(0.2); G.hitStop = 0.03;
         if (u.def.ram || u.def.boss) { p.chargeT = 0; p.spd *= 0.2; shake(0.4); }
       }
@@ -5061,8 +5325,9 @@ function updatePlayer(dt) {
     p.rearAmt = el < 0.35 ? easeOut(el / 0.35) : el < 0.62 ? 1 : Math.max(0, 1 - (el - 0.62) / 0.12);
     if (!p.slammed && el >= 0.74) {
       p.slammed = true; const R = G.mods.spinR, cx = p.x + Math.sin(p.face) * 1.6, cz = p.z + Math.cos(p.face) * 1.6;
-      let n = 0;
+      let n = 0; HIT.src = 'stomp';
       for (const u of G.units) { if (u.team !== 1 || u.dead) continue; const ex = u.x - cx, ez = u.z - cz; if (ex * ex + ez * ez < (R + u.r) ** 2) { hurtUnit(u, 34 * G.mods.dmg, ex, ez, 10, 0.9, true); n++; } }
+      HIT.src = ''; if (n) metaEvent('stomp', n);
       AU.thud(); AU.hit(); shake(0.5); punch(0.5); G.hitStop = 0.06; vibrate(40); flash(0.1, [1, 0.85, 0.6]);
       dust(cx, cz, 26, 2.4);
       for (let i = 0; i < 28; i++) { const a = i / 28 * TAU; psN.emit(cx + Math.cos(a) * 0.6, groundH(cx, cz) + 0.3, cz + Math.sin(a) * 0.6, Math.cos(a) * 9, 0.8, Math.sin(a) * 9, 0.8, 0.9, 2.8, DUST, 0.45, 0, 3); }
@@ -5131,11 +5396,14 @@ function drawTrail() {
 /* ---- Kushtrimi: the call to arms ---- */
 function doCry() {
   G.glory = 0; G.cryAnn = false; AU.horn(true); shake(0.4); punch(0.6); vibrate(60); flash(0.35, [1, 0.82, 0.45]);
-  healPlayer(25); banner(t('cryUsed'), '', true);
+  healPlayer(G.cryHeal || 25); banner(t('cryUsed'), '', true);
+  HIT.src = 'cry';
   for (const u of G.units) { if (u.team !== 1 || u.dead) continue; const ex = u.x - PL.x, ez = u.z - PL.z; if (ex * ex + ez * ez < 100) hurtUnit(u, 20 * G.mods.dmg, ex, ez, 12, 1.5, true); }
+  HIT.src = ''; metaEvent('cry');
   for (let i = 0; i < 48; i++) { const a = i / 48 * TAU; psA.emit(PL.x, PL.y + 1.2, PL.z, Math.cos(a) * 13, 1, Math.sin(a) * 13, 0.55, 0.9, 0.2, GOLD, 1, 0, 3); }
   G.cryLight = 1;
-  for (let i = 0; i < 4; i++) { const a = PL.face + PI * 0.25 + i * PI / 2; spawnAlly(PL.x + Math.sin(a) * 3.2, PL.z + Math.cos(a) * 3.2); }
+  const na = G.cryAllies || 4;
+  for (let i = 0; i < na; i++) { const a = PL.face + PI * 0.25 + i * TAU / na; spawnAlly(PL.x + Math.sin(a) * 3.2, PL.z + Math.cos(a) * 3.2); }
 }
 /* ---- arrows ---- */
 function fireArrow(x, y, z, tx, ty, tz, speed, team, dmg) {
@@ -5157,7 +5425,7 @@ function updateArrows(dt) {
       else for (const u of G.units) if (u.team === 0 && !u.dead && Math.hypot(u.x - a.x, u.z - a.z) < 0.7 && a.y < u.y + 2.2) { hurtUnit(u, a.dmg, a.vx, a.vz, 1, 0.1, false); hit = 1; break; }
     } else {
       for (const u of G.units) if (u.team === 1 && !u.dead && u !== a.last && Math.hypot(u.x - a.x, u.z - a.z) < u.r + (a.jav ? 0.55 : 0.35) && a.y < u.y + (u.def.cav ? 3.2 : 2.6 * u.rig.root.s[0])) {
-        HIT.quiet = !!a.quiet; hurtUnit(u, a.dmg, a.vx, a.vz, a.kb || 2, a.stun || 0.2, !!a.jav); HIT.quiet = false; hit = 1;
+        HIT.quiet = !!a.quiet; HIT.src = a.jav ? 'jav' : 'arrow'; hurtUnit(u, a.dmg, a.vx, a.vz, a.kb || 2, a.stun || 0.2, !!a.jav); HIT.quiet = false; HIT.src = ''; hit = 1;
         if (a.jav) { AU.hit(); shake(0.12); if (a.pierce > 0 && !u.def.boss && !u.def.ram) { a.pierce--; a.dmg *= 0.55; a.last = u; hit = 0; } }
         break;
       }
@@ -5221,12 +5489,17 @@ function spawnEnemy(type, o = {}) {
   if (o.x !== undefined) { x = o.x; z = o.z; ent = o.ent || 0; }
   const hpm = (o.hpm || 1) * (1 + (w - 1) * 0.08);
   const u = {
-    type, def, rig, team: 1, x, z, y: groundH(x, z), face: PI, hp: def.hp * hpm, maxHp: def.hp * hpm, dmg: def.dmg * (1 + (w - 1) * 0.05),
-    r: def.r, speed: def.speed * rand(0.9, 1.1), atkT: -1, atkCd: rand(0.3, 1.2), kbx: 0, kbz: 0, stun: 0, flash: 0, walkPh: rand(0, 6),
+    type, def, rig, team: 1, x, z, y: groundH(x, z), face: PI, hp: def.hp * hpm, maxHp: def.hp * hpm, dmg: def.dmg * (1 + (w - 1) * 0.05) * (G.foeDmg || 1),
+    r: def.r, speed: def.speed * rand(0.9, 1.1) * (G.foeSpd || 1), atkT: -1, atkCd: rand(0.3, 1.2), kbx: 0, kbz: 0, stun: 0, flash: 0, walkPh: rand(0, 6),
     dead: false, deadT: 0, gone: false, emis: [0, 0, 0], mode: 'charge', modeT: 0, hitCd: 0, slamCd: 3, struck: false, tgt: null, fleeT: 0, spd: 0,
     entering: o.entering !== undefined ? o.entering : true, ent, lean: 0, flinch: 0, guard: !!o.guard, parried: 0
   };
   if (o.face !== undefined) u.face = o.face;
+  // now and then one of the Sultan's elite: tougher, harder hitting, marked in gold and worth five times the gold
+  if (!def.boss && !def.ram && !o.guard && !o.noElite && Math.random() < (G.eliteP || 0)) {
+    u.elite = true; u.hp = u.maxHp = u.maxHp * 2.2; u.dmg *= 1.25;
+    const s = rig.root.s[0] * 1.08; rig.root.s = [s, s, s]; (rig.rs ? rig.rs.root : rig.root).tint = [1.16, 1.0, 0.74];
+  }
   rig.root.emis = u.emis; rig.root.at(x, u.y, z); rig.root.r[1] = u.face;
   scene.add(rig.root); G.units.push(u);
   if (type === 'ram') banner(t('ramWarn'), '', true);
@@ -5243,6 +5516,7 @@ function spawnAlly(x, z, o = {}) {
 }
 function damageGate(n) {
   if (G.state !== 'play' || G.noGate) return;
+  n /= G.foeDmg || 1; // the daily rule of hot blood is about the fight in the field, not the walls
   G.gateHp = Math.max(0, G.gateHp - n); G.gateFlash = 0.6; G.gateAlert = 3.5; gateNode.p[2] = -28.75;
   updateGateTint();
   if (G.gateWarnT <= 0) { banner(t('gateHit'), '', true); G.gateWarnT = 10; }
@@ -5496,7 +5770,7 @@ function buildQueue(w) {
 }
 function nextWave() {
   G.wave++; G.queue = buildQueue(G.wave); G.spawnT = 1.0; G.between = 0; G.clearT = -1;
-  banner(t(MS.cur && MS.cur.endless ? 'waveE' : 'wave', G.wave), t('sub')[G.wave - 1] || t('subE'), false); AU.horn(false);
+  banner(t(MS.cur && MS.cur.endless ? 'waveE' : 'wave', G.wave), MS.cur && MS.cur.waveSub ? MS.cur.waveSub(G.wave) : t('sub')[G.wave - 1] || t('subE'), false); AU.horn(false);
 }
 function updateWaves(dt) {
   if (G.between > 0) { G.between -= dt; if (G.between <= 0) nextWave(); return; }
@@ -5505,9 +5779,17 @@ function updateWaves(dt) {
     G.spawnT -= dt;
     if (G.spawnT <= 0 && alive < CAP) { const ty = G.queue.shift(); spawnEnemy(ty); G.spawnT = Math.max(0.35, 1.15 - G.wave * 0.07) * (ty === 'ram' ? 2 : 1) * rand(0.7, 1.3); }
   } else if (alive === 0 && G.clearT === -1 && PL.alive) {
-    G.clearT = 1.8; G.score += 100; banner(t('waveHeld', G.wave), '', false); AU.fanfare(); missionEvent('waveHeld', G.wave);
+    G.clearT = 1.8; G.score += 100; banner(t('waveHeld', G.wave), '', false); AU.fanfare(); metaEvent('wave', G.wave); missionEvent('waveHeld', G.wave);
   }
-  if (G.clearT > 0) { G.clearT -= dt; if (G.clearT <= 0) { G.clearT = -2; if (G.wave >= WAVES.length && !(MS.cur && MS.cur.endless)) endGame(true); else openUpgrades(); } }
+  if (G.clearT > 0) {
+    G.clearT -= dt;
+    if (G.clearT <= 0) {
+      G.clearT = -2;
+      if (G.wave >= WAVES.length && !(MS.cur && MS.cur.endless)) endGame(true);
+      else if (G.noGifts) { healPlayer(Math.round(PL.maxHp * 0.15)); G.between = 2.4; } // a rule of the daily challenge: no gifts between waves
+      else openUpgrades();
+    }
+  }
 }
 const UPGRADES = [
   { id: 'dmg', cat: 'sword', max: 4, apply() { G.mods.dmg += 0.25; } },
@@ -5659,9 +5941,9 @@ const ENDLESS = {
   stars: []
 };
 function waveDef(w) {
-  if (w <= WAVES.length) return WAVES[w - 1];
   const k = w - WAVES.length;
-  return { azap: 8 + k, jan: 10 + k, archer: 8 + (k >> 1), sipahi: 4 + (k >> 1), ram: k % 2 ? 1 : 2, flank: 1, agha: k % 3 === 0 ? 1 : 0, pasha: k % 5 === 0 ? 1 : 0 };
+  const d = w <= WAVES.length ? WAVES[w - 1] : { azap: 8 + k, jan: 10 + k, archer: 8 + (k >> 1), sipahi: 4 + (k >> 1), ram: k % 2 ? 1 : 2, flank: 1, agha: k % 3 === 0 ? 1 : 0, pasha: k % 5 === 0 ? 1 : 0 };
+  return G.dmods && G.dmods.length ? dailyWave(d, w) : d; // the daily challenge bends the waves to its rules
 }
 G.waveDef = waveDef;
 
@@ -5840,7 +6122,7 @@ const SQ = {
   sView: 'Pamja', viewNear: 'Afër', viewFar: 'Larg', sViewD: 'Afër: kamera pas shpinës së Skënderbeut. Larg: e gjithë fusha e betejës.',
   sGfx: 'Grafika', gfxHigh: 'E lartë', gfxLow: 'E shpejtë', sGfxD: 'E shpejta ul hijet, barin dhe pemët për telefona më të thjeshtë.',
   sVol: 'Zëri', sMusic: 'Muzika', sSens: 'Kamera', sSensD: 'Sa shpejt rrotullohet kamera kur e tërheq me gisht ose me maus.',
-  sVib: 'Dridhjet', sHints: 'Këshillat', sProg: 'Progresi', sReset: 'Fshi yjet', sReset2: 'Kliko sërish për t’i fshirë', sResetDone: 'Yjet u fshinë',
+  sVib: 'Dridhjet', sHints: 'Këshillat', sProg: 'Progresi', sReset: 'Fshi progresin', sReset2: 'Kliko sërish: fshihen yjet, niveli, dukatët dhe medaljet', sResetDone: 'Progresi u fshi',
   ab: { atk: 'Godit', blk: 'Mbrojtja', jav: 'Shtiza', dash: 'Vrull', spin: 'Ngrije kalin', cry: 'Kushtrimi' },
   keyAtk: 'Klik', keyBlk: 'C', keyJav: 'Q', keyDash: 'Shift', keySpin: 'F', keyCry: 'R',
   sub: ['Azapët i afrohen portës', 'Jeniçerët i bashkohen sulmit', 'Harkëtarë dhe një dash rrethimi', 'Sulmon kalorësia e spahinjve', 'I prin Agai i jeniçerëve', 'Vijnë nga krahët', 'Elita e Sulltanit', 'Dy desh te porta', 'Mblidhet sulmi i fundit', 'Pasha del në fushë'],
@@ -5861,6 +6143,70 @@ const SQ = {
   hintGate: 'Mbro portën: armiqtë që e arrijnë e dëmtojnë', hintSkills: 'Vrulli i shkel armiqtë, kali i ngritur i shpërndan', hintTorch: 'Qëndro pranë një makine rrethimi derisa të marrë flakë',
   gateInd: 'Porta', boss: 'Komandanti'
 };
+/* progression: levels, gold, the armory, looks, medals, daily orders and the daily challenge */
+Object.assign(SQ, {
+  mDaily: 'Sfida e ditës', mDailyD: 'Sot: {0}', mDailyDone: 'U krye sot. Seria: {0}', mArmory: 'Armatimi', mArmoryD: 'Armë më të forta, kuaj, flamuj dhe medalje',
+  lvlN: 'Niveli {0}', gold: 'dukatë', xp: 'përvojë', days: n => n === 1 ? '1 ditë' : n + ' ditë',
+  titles: ['Djalosh', 'Ushtar', 'Kalorës', 'Kapedan', 'Komandant', 'Zot i Krujës', 'Mbrojtës i Arbërisë', 'Dragua', 'Legjendë'],
+  armory: 'Armatimi', tArms: 'Armët', tLooks: 'Pamja', tMedals: 'Medaljet', profA: 'Profili: niveli {0}, {1}, {2} dukatë. Hap armatimin',
+  arm: {
+    sword: ['Shpata', 'Çdo nivel e bën çdo goditje 7% më të fortë', 'Dëmi'],
+    armor: ['Parzmorja', 'Çdo nivel shton 12 pikë shëndeti', 'Shëndeti'],
+    horse: ['Kali i luftës', 'Galop më i shpejtë dhe vrull më shpesh', 'Shpejtësia'],
+    jav: ['Shtizat', 'Më shumë shtiza, që rimbushen më shpejt', ''],
+    cry: ['Kushtrimi', 'Lavdi më e shpejtë dhe më shumë malësorë', '']
+  },
+  armT: {
+    jav: ['Rimbushen 20% më shpejt', 'Katër shtiza në vend të tri', 'Rimbushen edhe 20% më shpejt', 'Pesë shtiza', 'Çdo shtizë shpon dy armiq'],
+    cry: ['Lavdia mbushet 10% më shpejt', 'Lavdia mbushet edhe 10% më shpejt', 'Kushtrimi të shëron 40 pikë', 'Lavdia mbushet edhe 10% më shpejt', 'Gjashtë malësorë në vend të katër']
+  },
+  armMax: 'Në nivelin më të lartë', armNeed: 'Edhe {0}', armBuy: 'Bli për {0} dukatë', armLv: 'Niveli {0} nga 5',
+  lkHorse: 'Kali', lkBan: 'Flamuri dhe pelerina', lkOn: 'Në përdorim', lkOwn: 'Zgjidh', lkLv: 'Niveli {0}', lkMedal: 'Medalja: {0}',
+  lkHint: 'Zgjidh një ngjyrë për ta parë te Skënderbeu. E blerë mbetet e jotja.',
+  coat: { white: 'I bardhë', grey: 'Gri me pika', bay: 'Dori', black: 'I zi', chestnut: 'Gështenjë', golden: 'I artë' },
+  ban: { red: 'E kuqe', ivory: 'E bardhë', black: 'E zezë', blue: 'E kaltër', purple: 'E purpurt', gold: 'E artë' },
+  medN: 'Ke {0} nga {1} medalje', medGold: '+{0} dukatë',
+  med: {
+    first: ['Gjaku i parë', 'Rrëzo armikun e parë'], k100: ['Njëqind', 'Rrëzo 100 armiq'], k1000: ['Një mijë', 'Rrëzo 1 000 armiq'], k5000: ['Furtuna e maleve', 'Rrëzo 5 000 armiq'],
+    par25: ['Mburojë e gjallë', 'Zmbraps 25 goditje në kohën e duhur'], jav50: ['Syri i shqiponjës', 'Rrëzo 50 armiq me shtiza'],
+    str12: ['I pandalshëm', 'Rrëzo 12 armiq radhazi'], str25: ['Stuhi shpatash', 'Rrëzo 25 armiq radhazi'],
+    chg5: ['Ortek', 'Shkel pesë armiq me një vrull të vetëm'], stp5: ['Thundra e rëndë', 'Godit pesë armiq me një ngritje të kalit'], hvy4: ['Goditja e rëndë', 'Godit katër armiq me një goditje të rëndë'],
+    boss10: ['Gjahtar komandantësh', 'Mposht 10 komandantë osmanë'], elite10: ['Elita bie', 'Rrëzo 10 luftëtarë të elitës'], cry20: ['Zëri i maleve', 'Thirr Kushtrimin 20 herë'],
+    torvioll: ['Torvioli', 'Fito Betejën e Torviollit'], kruja: ['Kruja qëndron', 'Mbaje Krujën dhjetë valë'], raid: ['Natë zjarri', 'Digj makinat e rrethimit dhe kthehu'], duel: ['Dueli i Vajkalit', 'Mund Ballaban Pashën'],
+    stars3: ['Tre yje', 'Fito tre yje në një betejë'], stars12: ['Të gjitha yjet', 'Fito të 12 yjet e fushatës'], flawless: ['Pa asnjë plagë', 'Fito një betejë pa rënë shëndeti nën 90%'],
+    wave15: ['Muri i gjallë', 'Mbaj 15 valë në Mbrojtjen pa fund ose në sfidën e ditës'], wave25: ['E pathyeshme', 'Mbaj 25 valë në Mbrojtjen pa fund ose në sfidën e ditës'],
+    daily1: ['Sfida e parë', 'Kryej një sfidë të ditës'], daily7: ['Shtatë ditë', 'Kryej sfidën e ditës shtatë ditë radhazi'], maxed: ['Çeliku i Kastriotëve', 'Çoje një armë në nivelin V']
+  },
+  ord: {
+    kills: 'Rrëzo {0} armiq', parries: 'Zmbraps {0} goditje', javKills: 'Rrëzo {0} armiq me shtiza', chargeHits: 'Shkel {0} armiq me vrull', stompHits: 'Godit {0} armiq duke ngritur kalin',
+    heavyKills: 'Rrëzo {0} armiq me goditje të rënda', bosses: 'Mposht {0} komandantë', elites: 'Rrëzo {0} luftëtarë të elitës', waves: 'Mbaj {0} valë', cries: 'Thirr Kushtrimin {0} herë',
+    wins: 'Fito një betejë të fushatës', sipahi: 'Rrëzo {0} spahinj', archers: 'Rrëzo {0} harkëtarë', streak: 'Rrëzo {0} armiq radhazi'
+  },
+  orders: 'Urdhrat e ditës', ordBonus: 'Kryeji të tre për {0} dukatë shtesë', ordAll: 'Të tre urdhrat u kryen sot', ordNew: 'Urdhra të rinj nesër',
+  daily: 'Sfida e ditës', dGoal: 'Mbaj pesë valë me rregullat e sotme. Çdo ditë sjell rregulla të reja.',
+  dTod: { dawn: 'Kruja në agim', day: 'Kruja në mesditë', dusk: 'Kruja në muzg', night: 'Kruja natën' },
+  dRules: 'Rregullat e sotme', dReward: 'Shpërblimi', dRewardV: '{0} dukatë dhe {1} përvojë', dBest: 'Rekordi i sotëm', dBestV: 'vala {0}', dBest0: 'ende asnjë',
+  dStreak: 'Seria', dStreak0: 'Kryeje sot dhe nis një seri', dStreakV: '{0} radhazi', dStreakB: 'Seria jep deri në 100 dukatë më shumë',
+  dDoneT: 'Sfida e sotme u krye. Sfida e re vjen pas {0}. Deri atëherë mund ta luash sërish për rekordin e ditës.',
+  dDone: 'Sfida e ditës u krye!', dDoneSub: '+{0} dukatë. Vazhdo për rekordin e ditës', dSub: 'Edhe {0} valë për sfidën', dSubLast: 'Vala e fundit e sfidës', oDaily: 'Mbaj pesë valë',
+  dm: {
+    cav: ['Kalorësia', 'Spahinjtë sulmojnë që në valën e parë'], archers: ['Shi shigjetash', 'Dyfish më shumë harkëtarë'],
+    rams: ['Deshtë e rrethimit', 'Një dash në çdo valë, dhe porta nis e dëmtuar'], elite: ['Elita e Sulltanit', 'Një në pesë armiq është luftëtar i elitës'],
+    bosses: ['Agallarët', 'Një aga i jeniçerëve në çdo valë të dytë'], fury: ['Gjak i nxehtë', 'Të gjithë godasin 50% më fort, edhe ti'],
+    swift: ['Vrulli', 'Armiqtë lëvizin më shpejt, por edhe vrulli yt kthehet më shpejt'], javs: ['Shtiza pa fund', 'Dy shtiza më shumë, që rimbushen shumë më shpejt'],
+    nogift: ['Pa dhurata', 'Asnjë dhuratë mes valëve, por çdo armik jep dyfish dukatë']
+  },
+  tMedal: 'Medalje e re', tOrder: 'Urdhër i kryer', tOrders: 'Të gjithë urdhrat e ditës', tLevel: 'Niveli {0}', tBought: 'U ble',
+  tiers: ['Shkatërrim!', 'Furtunë!', 'I pandalshëm!', 'Legjendë!'],
+  rGold: 'dukatë', rXp: 'përvojë', rLvlUp: 'Niveli {0}!', rDaily: 'Sfida e ditës', rNextBuy: 'Mund ta blesh tani: {0}', rNextNeed: 'Synimi i radhës: {1}, edhe {0} dukatë', rNextOrd: 'Urdhër: {0}',
+  armoryBtn: 'Armatimi', share: 'Ndaje', shareSaved: 'Fotoja u ruajt', shareText: 'Luaj Skënderbeun falas në shfletues: https://skenderbeu.fun',
+  shPlay: 'Luaje falas', shWaves: 'Kruja qëndroi {0} valë', shKills: 'armiq të rënë', shScore: 'pikë', shLevel: '{0}, niveli {1}',
+  coatN: { white: 'Kali i bardhë', grey: 'Kali gri me pika', bay: 'Kali dori', black: 'Kali i zi', chestnut: 'Kali gështenjë', golden: 'Kali i artë' },
+  banN: { red: 'Flamuri i kuq', ivory: 'Flamuri i bardhë', black: 'Flamuri i zi', blue: 'Flamuri i kaltër', purple: 'Flamuri i purpurt', gold: 'Flamuri i artë' },
+  dRewardDone: 'Shpërblimi u mor sot', dBestW: 'Rekordi i sotëm', dStreakW: 'Ditë radhazi', dDoneQ: 'Sfida e sotme u krye. Nesër vijnë rregulla të reja.', dFailQ: 'Mbaje portën pesë valë për ta kryer sfidën. Provo sërish.',
+  armName: (id, n) => SQ.arm[id][0] + (n > 1 ? ' ' + ROMAN[n] : '')
+});
+SQ.M.daily = { name: 'Sfida e ditës', place: 'Kruja', text: '', win: '', stars: [] };
 const I18N = { sq: SQ };
 const lang = 'sq';
 function t(k, ...a) { let s = SQ[k]; if (s == null) return k; if (typeof s === 'string') a.forEach((v, i) => { s = s.replace('{' + i + '}', v); }); return s; }
@@ -5933,6 +6279,13 @@ const AU = {
   lose() { if (this.ok('lo')) [330, 262, 220, 165].forEach((f, i) => this.tone('triangle', f, f * 0.97, 0.7, 0.13, i * 0.32)); },
   pick() { if (this.ok('pk')) { this.tone('triangle', 660, 660, 0.15, 0.12); this.tone('triangle', 990, 990, 0.25, 0.1, 0.08); } },
   tick() { if (this.ok('tk', 0.05)) this.tone('triangle', 1400, 1300, 0.05, 0.05); },
+  // gold: a bright clink as each coin lands in the purse
+  coin() { if (this.ok('cn', 0.04)) { const f = 1900 + Math.random() * 260; this.tone('triangle', f, f * 0.995, 0.08, 0.045); this.tone('sine', f * 1.5, f * 1.5, 0.16, 0.03, 0.03); } },
+  buy() { if (this.ok('by', 0.2)) { [1319, 1568, 2093].forEach((f, i) => this.tone('triangle', f, f, 0.18, 0.07, i * 0.06)); this.tone('sine', 110, 60, 0.3, 0.25); } },
+  deny() { if (this.ok('dn', 0.2)) { this.tone('square', 220, 200, 0.09, 0.04); this.tone('square', 196, 180, 0.12, 0.04, 0.09); } },
+  medal() { if (this.ok('md', 0.3)) { [784, 988, 1175, 1568].forEach((f, i) => this.tone('triangle', f, f, 0.5, 0.075, i * 0.09)); this.tone('sine', 392, 392, 1.1, 0.06, 0.05); } },
+  level() { if (this.ok('lv', 0.5)) { this.horn(true, true); [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone('triangle', f, f, 0.6, 0.1, 0.1 + i * 0.11)); } },
+  tier() { if (this.ok('ti', 0.3)) { this.horn(true, true); this.tone('triangle', 880, 880, 0.3, 0.07, 0.05); this.tone('triangle', 1320, 1320, 0.4, 0.06, 0.14); } },
   // iso: a soft sung drone, as in Albanian iso-polyphony, under the battle
   isoSet(level) {
     const c = this.ctx; if (!c) return;
@@ -6152,7 +6505,9 @@ function updateHud(dt) {
   if (G.streak >= 3) {
     const n = String(G.streak);
     if (UI.cache.streakN !== n) { setTxt('streakN', n); st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop'); }
-    setTxt('streakT', G.streak >= 10 ? t('streakBig') : t('streak', '').trim());
+    let ti = -1; STREAK_TIERS.forEach((s, i) => { if (G.streak >= s[0]) ti = i; });
+    setTxt('streakT', ti >= 0 ? SQ.tiers[ti] : t('streak', '').trim()); setCls(st, 'tier', ti >= 0);
+    if (UI.cache.tierN !== ti) { UI.cache.tierN = ti; if (ti >= 0) { st.classList.remove('tierIn'); void st.offsetWidth; st.classList.add('tierIn'); } }
   }
   const low = PL.alive && hpk < 0.3 && G.state === 'play';
   setCls($('hurt'), 'low', low);
@@ -6190,7 +6545,7 @@ function renderObj() {
   if (!MS.dirty) return; MS.dirty = false;
   const ul = $('objList'), old = new Set([...ul.children].map(li => li.dataset.k)); ul.textContent = '';
   for (const o of MS.obj) {
-    if (o.hidden || (m.waves && o.k === 'oWaves') || m.endless) continue;
+    if (o.hidden || (m.waves && o.k === 'oWaves') || (m.endless && !m.daily)) continue;
     const li = document.createElement('li'); li.dataset.k = o.k; li.textContent = t(o.k);
     if (o.goal) { const b = document.createElement('b'); b.className = 'num'; b.textContent = ' ' + o.n + '/' + o.goal; li.appendChild(b); }
     if (o.done) li.className = 'done'; if (!old.has(o.k)) li.classList.add('fresh');
@@ -6240,7 +6595,7 @@ function drawMini() {
   if (raid) for (const e of SIEGE) { p = Pm(e.x, e.z); c.fillStyle = e.fire > 0 ? '#ffb347' : '#e0402c'; c.fillRect(p[0] - 4, p[1] - 4, 8, 8); }
   for (const u of G.units) {
     if (u.dead) continue; p = Pm(u.x, u.z);
-    c.fillStyle = u.team === 0 ? '#f4efe5' : u.type === 'ram' ? '#c88a3a' : u.guard && !G.alarm ? 'rgba(224,64,44,.55)' : '#e0402c';
+    c.fillStyle = u.team === 0 ? '#f4efe5' : u.type === 'ram' ? '#c88a3a' : u.elite ? '#f0c35a' : u.guard && !G.alarm ? 'rgba(224,64,44,.55)' : '#e0402c';
     const r = u.def.boss ? 6.5 : u.type === 'ram' ? 6 : u.def.cav ? 4.5 : 3.4;
     c.beginPath(); c.arc(p[0], p[1], r, 0, TAU); c.fill();
   }
@@ -6261,7 +6616,7 @@ function updateEBars(dt) {
     u.hpT -= dt;
     const hgt = u.def.cav ? 2.95 : u.type === 'ram' ? 3.3 : 2.15 * u.rig.root.s[0];
     project(u.x, u.y + hgt, u.z, _pp); if (!_pp.ok) continue;
-    const b = EBARS[k++]; b.el.hidden = false;
+    const b = EBARS[k++]; b.el.hidden = false; if (b.elite !== !!u.elite) { b.elite = !!u.elite; b.el.classList.toggle('el', b.elite); }
     b.el.style.transform = `translate(${_pp.x.toFixed(1)}px,${_pp.y.toFixed(1)}px)`;
     b.fill.style.transform = `scaleX(${clamp(u.hp / u.maxHp, 0, 1).toFixed(3)})`;
     b.el.style.opacity = Math.min(1, u.hpT * 2).toFixed(2);
@@ -6325,7 +6680,7 @@ function updateHints(dt) {
 }
 
 /* ---- screens ---- */
-const SCREENS = ['title', 'map', 'brief', 'settings', 'pause', 'upgrade', 'end', 'gallery', 'donate'];
+const SCREENS = ['title', 'map', 'brief', 'settings', 'pause', 'upgrade', 'end', 'gallery', 'donate', 'armory', 'daily'];
 function showScreen(id, focusSel) {
   for (const s of SCREENS) $(s).hidden = s !== id;
   if (id === 'title') { titleState(UI.started, false); titleMenu(); if (!UI.started) focusSel = '#nothing'; }
@@ -6354,18 +6709,23 @@ function titleMenu() {
   c.hidden = !m; if (m) $('mContinueD').textContent = SQ.M[m.id].name + ', ' + m.year;
   [...$('mainMenu').children].filter(b => !b.hidden).forEach((b, i) => b.style.setProperty('--i', i));
   $('press').firstChild.textContent = t(touchMode ? 'pressTap' : 'pressKey');
+  renderMenuExtras();
 }
 function pressStart() {
   if (UI.started || !ready || G.state !== 'title' || $('title').hidden) return;
-  UI.started = true; AU.init(); AU.isoSet(0.4); AU.horn(false, false); AU.thud();
+  UI.started = true; UI.startAt = performance.now(); AU.init(); AU.isoSet(0.4); AU.horn(false, false); AU.thud();
   titleMenu(); titleState(true, true);
   setTimeout(() => { if (!touchMode && !$('title').hidden && G.state === 'title') { const f = $('mainMenu').querySelector('button:not([hidden]):not([disabled])'); if (f) f.focus({ preventScroll: true }); } }, reduceMotion ? 0 : 950);
+  // medals already earned before they existed (stars won in the campaign) are handed over as the menu opens
+  setTimeout(() => { checkMedals(true); renderMenuExtras(); }, reduceMotion ? 200 : 1700);
 }
 window.addEventListener('keydown', e => {
   if (UI.started || G.state !== 'title' || $('title').hidden || !ready || ['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'CapsLock'].includes(e.key)) return;
   e.preventDefault(); e.stopImmediatePropagation(); setTouchMode(false); pressStart();
 }, true);
 $('title').addEventListener('pointerdown', e => { if (!UI.started && ready) { e.preventDefault(); pressStart(); } });
+// the tap that opens the menu must not also choose whatever item appears under the finger
+$('title').addEventListener('click', e => { if (performance.now() - (UI.startAt || -1e9) < 650) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 // one focus for mouse and keys, a soft tick as it moves, a chime on choosing
 for (const b of $('mainMenu').children) {
   b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && document.activeElement !== b && !b.disabled) b.focus({ preventScroll: true }); });
@@ -6376,7 +6736,7 @@ $('mContinue').addEventListener('click', () => { const m = nextMission(); if (m 
 // in the council lists too the mouse moves the one selection, so a resting pointer never leaves a second row lit
 document.addEventListener('pointerover', e => {
   if (e.pointerType !== 'mouse') return;
-  const b = e.target.closest && e.target.closest('.hang .menu>button,.hang .missions button');
+  const b = e.target.closest && e.target.closest('.hang .menu>button,.hang .missions button,.hang .arm,.hang .sw');
   if (b && document.activeElement !== b && !b.disabled) { b.focus({ preventScroll: true }); AU.tick(); }
 });
 function hideScreens() { for (const s of SCREENS) $(s).hidden = true; UI.hud.classList.remove('dim', 'dim2'); }
@@ -6404,7 +6764,7 @@ function applyI18n() {
   document.documentElement.lang = 'sq';
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   if (!gl) { $('glErr').hidden = false; $('glErr').textContent = t('glErr'); }
-  const rec = store.get('endless', null); $('record').textContent = rec ? t('record', rec.wave, rec.score.toLocaleString('sq-AL')) : '';
+  const rec = store.get('endless', null); $('record').textContent = rec ? t('record', rec.wave, fmtN(rec.score)) : '';
   UI.cache = {};
 }
 /* campaign */
@@ -6449,6 +6809,7 @@ function toTitleMenu() { UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay
 function backKey() {
   if (G.state === 'gallery') return;
   if (!$('brief').hidden) $('brBack').click(); else if (!$('map').hidden) toTitleMenu(); else if (!$('settings').hidden) closeSettings(); else if (!$('donate').hidden) closeDonate();
+  else if (!$('armory').hidden) closeArmory(); else if (!$('daily').hidden) toTitleMenu();
 }
 /* settings */
 function openSettings(from) {
@@ -6473,7 +6834,11 @@ $('rSens').addEventListener('input', e => { SET.sens = +e.target.value / 100; sa
 for (const [id, k] of [['tMusic', 'music'], ['tVib', 'vib'], ['tHints', 'hints']]) $(id).addEventListener('click', () => {
   SET[k] = !SET[k]; saveSet(); $(id).setAttribute('aria-checked', String(SET[k])); if (k === 'music') { AU.init(); AU.setMusic(SET[k]); }
 });
-$('bReset').addEventListener('click', () => { const b = $('bReset'); if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = t('sReset2'); } else { store.set('prog', {}); store.set('endless', null); b.textContent = t('sResetDone'); b.dataset.arm = ''; } });
+$('bReset').addEventListener('click', () => {
+  const b = $('bReset');
+  if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = t('sReset2'); }
+  else { store.set('prog', {}); store.set('endless', null); META.P = profNew(); syncDay(); profSave(true); heroLook(); b.textContent = t('sResetDone'); b.dataset.arm = ''; }
+});
 /* support the game: each coin opens PayPal's donation page with the amount filled in */
 const PAYPAL = 'erionpay@gmail.com';
 const payURL = amt => 'https://www.paypal.com/donate/?' + new URLSearchParams(Object.assign({ business: PAYPAL, currency_code: 'EUR', no_recurring: '0', item_name: t('donateItem') }, amt ? { amount: amt.toFixed(2) } : {})).toString();
@@ -6559,34 +6924,40 @@ function fmtTime(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + Strin
 function endGame(win, reason) {
   if (G.state === 'over' || G.state === 'title') return;
   G.state = 'over';
-  const m = MS.cur, L = m ? SQ.M[m.id] : null;
+  const m = MS.cur, L = m ? SQ.M[m.id] : null, held = Math.max(0, G.wave - 1);
   if (win) { G.score += Math.round(G.gateHp / G.gateMax * 500) + Math.round(PL.hp * 2); AU.fanfare(); }
   const stars = missionStars(win), nStars = stars.filter(Boolean).length;
   if (m && win && !m.endless) PROG.save(m.id, nStars);
   let newRec = false;
-  if (m && m.endless) { const r = store.get('endless', null), held = Math.max(0, G.wave - 1); if (!r || G.score > r.score) { store.set('endless', { wave: held, score: G.score }); newRec = !!r || G.score > 0; } }
-  $('endVerdict').textContent = m && m.endless ? t('waveHeld', Math.max(0, G.wave - 1)) : win ? t('win') : t('lose');
-  $('endTitle').textContent = m && !m.endless && win ? L.name : m && m.endless ? L.name : reason === 'gate' ? t('loseGate') : t('loseHero');
+  if (m && m.endless && !m.daily) { const r = store.get('endless', null); if (!r || G.score > r.score) { store.set('endless', { wave: held, score: G.score }); newRec = !!r || G.score > 0; } }
+  META.endStars = nStars;
+  const R = m ? metaEnd(win, nStars) : null;
+  $('endVerdict').textContent = m && m.endless ? t('waveHeld', held) : win ? t('win') : t('lose');
+  $('endTitle').textContent = m && (m.endless || win) ? L.name : reason === 'gate' ? t('loseGate') : t('loseHero');
   const se = $('endStars'), cr = $('endCrit'); se.textContent = ''; cr.textContent = '';
   if (m && !m.endless && win) { se.innerHTML = stars.map(starSvg).join(''); L.stars.forEach((s, i) => { const li = document.createElement('li'); li.innerHTML = starSvg(stars[i]); li.append(s); cr.appendChild(li); }); }
   se.hidden = cr.hidden = !(m && !m.endless && win);
+  // the battle in numbers, side by side
   const tal = $('endTally'); tal.textContent = '';
-  const add = (k, v) => { const dt_ = document.createElement('dt'), dd = document.createElement('dd'); dt_.textContent = t(k); dd.textContent = v; tal.append(dt_, dd); };
+  const add = (k, v) => { const d = document.createElement('div'), b = document.createElement('b'), sp = document.createElement('span'); d.className = 'st'; b.textContent = v; sp.textContent = t(k); d.append(b, sp); tal.appendChild(d); };
   add('tKills', G.kills); add('tTime', fmtTime(MS.t));
-  if (m && m.waves) add('tWave', Math.max(0, G.wave - (win ? 0 : 1)));
-  add('tScore', G.score.toLocaleString('sq-AL'));
+  if (m && m.waves && !m.endless) add('tWave', Math.max(0, G.wave - (win ? 0 : 1)));
+  add('tScore', fmtN(G.score));
   if (G.parries) add('tParry', G.parries);
-  if (m && m.endless) { const r = store.get('endless', null); if (r) add('tRecord', newRec ? t('newBest') : r.score.toLocaleString('sq-AL')); }
-  $('endQuote').textContent = m && m.endless ? t('endlessQ', Math.max(0, G.wave - 1)) : win ? L.win : t('loseQ');
+  if (m && m.endless && !m.daily) { const r = store.get('endless', null); if (r) add('tRecord', newRec ? t('newBest') : fmtN(r.score)); }
+  if (m && m.daily) add('dBestW', META.P.day.best);
+  renderRewards(R);
+  $('endQuote').textContent = m && m.daily ? (META.P.day.done ? t('dDoneQ') : t('dFailQ')) : m && m.endless ? t('endlessQ', held) : win ? L.win : t('loseQ');
   const acts = $('endActs'); acts.textContent = '';
-  const btn = (k, cls, fn) => { const b = document.createElement('button'); b.className = cls; b.textContent = t(k); b.addEventListener('click', fn); acts.appendChild(b); };
+  const btn = (k, cls, fn) => { const b = document.createElement('button'); b.className = cls; b.textContent = t(k); b.addEventListener('click', fn); acts.appendChild(b); return b; };
   const idx = m ? MISSIONS.indexOf(m) : -1;
   if (win && idx >= 0 && idx < MISSIONS.length - 1) btn('next', 'pri', () => { fadeSwap(() => { leaveBattle(); openBrief(MISSIONS[idx + 1]); }); });
   btn('retry', win && idx >= 0 && idx < MISSIONS.length - 1 ? 'sec' : 'pri', () => startGame(m));
+  if (canBuyAny()) { const b = btn('armoryBtn', 'sec', () => fadeSwap(() => { leaveBattle(); openArmory('arms'); })); b.classList.add('new'); b.insertAdjacentHTML('beforeend', '<i class="dot" aria-hidden="true"></i>'); }
   if (m && !m.endless) btn('toMap', 'sec', () => fadeSwap(() => { leaveBattle(); openMap(); }));
   btn('toTitle', 'sec', toTitle);
   $('endDonate').hidden = !(win || (m && m.endless));
-  setTimeout(() => { if (G.state === 'over') showScreen('end'); }, win ? 900 : 700);
+  setTimeout(() => { if (G.state === 'over') { showScreen('end'); playRewards(); } }, win ? 900 : 700);
 }
 function togglePause() {
   if (G.state === 'play') { G.state = 'pause'; $('pauseSub').textContent = MS.cur ? SQ.M[MS.cur.id].name : ''; showScreen('pause'); }
@@ -6604,22 +6975,23 @@ function resetHero(z) {
   PL.atk = { ph: 'idle', t: 0, kind: 0, from: null, hit: false, queued: false, combo: 0, n: 0, holdT: 0, charge: 0 };
   PL.rig.root.r[0] = 0; PL.rig.root.r[2] = 0;
 }
-function leaveBattle() { clearField(); setTorch(false); resetSiege(true); MS.cur = null; Object.assign(ARENA, ARENA0); G.noGate = false; G.alarm = false; G.state = 'title'; UI.hud.hidden = true; resetHero(-16); }
+function leaveBattle() { metaLeave(); clearField(); setTorch(false); resetSiege(true); MS.cur = null; Object.assign(ARENA, ARENA0); G.noGate = false; G.alarm = false; G.state = 'title'; UI.hud.hidden = true; resetHero(-16); }
 function beginGame(m) {
   m = m || MISSIONS[1];
   clearField(); setTorch(false); resetSiege(!!(m.gate || m.id === 'raid')); resetMods(); resetInput();
   G.gid = (G.gid || 0) + 1;
-  Object.assign(G, { wave: 0, kills: 0, score: 0, time: 0, gateHp: G.gateMax, glory: 0, between: 0, clearT: -1, hitStop: 0, slowT: 0, gateWarnT: 0, gateFlash: 0, gateAlert: 0, archerT: 0, cryAnn: false, queue: [], streak: 0, streakT: 0, parries: 0, alarm: false, noGate: !m.gate });
+  Object.assign(G, { wave: 0, kills: 0, score: 0, time: 0, gateHp: G.gateMax, glory: 0, between: 0, clearT: -1, hitStop: 0, slowT: 0, gateWarnT: 0, gateFlash: 0, gateAlert: 0, archerT: 0, cryAnn: false, queue: [], streak: 0, streakT: 0, parries: 0, alarm: false, noGate: !m.gate,
+    dmods: [], foeDmg: 1, foeSpd: 1, goldK: 1, noGifts: false, eliteP: 0, javPierce: 1, cryHeal: 25, cryAllies: 4 });
   Object.assign(MS, { cur: m, phase: 0, t: 0, q: [], spawnT: 0, boss: null, prompt: null, alarmT: 0, reinT: 0, dirty: true });
   Object.assign(ARENA, m.arena);
   if (ATM.tod !== m.tod) setTimeOfDay(m.tod);
   gateNode.tint = null; gateNode.p[2] = -29.0;
   const fromTitle = G.state === 'title';
-  resetHero(-17); m.setup(); CAM.yaw = PL.face; CAM.off = 0;
+  resetHero(-17); m.setup(); metaBegin(m); CAM.yaw = PL.face; CAM.off = 0;
   if (fromTitle) CAM.swoop = { t: 0, dur: 1.5, eye: CAM.eye.slice(), tgt: CAM.tgt.slice() }; else camSnap = true;
   hideScreens(); UI.hud.hidden = false; UI.touch.hidden = !touchMode; $('abil').hidden = touchMode; UI.cache = {}; placeStickHome(); if (touchMode) layoutTouch();
   G.state = 'play'; UI.shot = null; AU.neigh(); queueHints(); renderObj(); renderPerks(); UI.cdWas = {}; UI.rdyT = {};
-  banner(SQ.M[m.id].name, m.endless ? '' : SQ.M[m.id].place, false);
+  banner(SQ.M[m.id].name, m.daily ? G.dmods.map(k => SQ.dm[k][0]).join(' dhe ') : m.endless ? '' : SQ.M[m.id].place, false);
 }
 function startGame(m) {
   if (!ready) return;
@@ -6664,7 +7036,7 @@ function updateCam(dt) {
     const fx = Math.sin(sa), fz = Math.cos(sa), side = portrait || !UI.started ? 0 : 3.4;
     const ex = PL.x - fx * R + fz * side * 0.3, ey = PL.y + (portrait ? 1.9 : 1.5) + Math.sin(gtime * 0.21) * 0.2, ez = PL.z - fz * R - fx * side * 0.3;
     // tall screens: the hero stands between the name and the menu, a little lower on the opening card
-    const tx = PL.x + fz * side, ty = PL.y + (portrait ? (UI.started ? 0.5 : 1.9) : 2.5), tz = PL.z - fx * side;
+    const tx = PL.x + fz * side, ty = PL.y + (portrait ? (UI.peek ? -1.1 : UI.started ? 0.5 : 1.9) : 2.5), tz = PL.z - fx * side; // in the armory's colour picker he stands above the list
     if (camSnap) { CAM.eye = [ex, ey, ez]; CAM.tgt = [tx, ty, tz]; camSnap = false; }
     CAM.eye = [damp(CAM.eye[0], ex, 2.5, dt), damp(CAM.eye[1], ey, 2.5, dt), damp(CAM.eye[2], ez, 2.5, dt)]; CAM.tgt = [damp(CAM.tgt[0], tx, 2.5, dt), damp(CAM.tgt[1], ty, 2.5, dt), damp(CAM.tgt[2], tz, 2.5, dt)];
     // a long lens on the hero: the valley behind falls softly out of focus
@@ -6771,6 +7143,8 @@ function queueFx(dt) {
     else fxN.disc(u.x, u.z, decalY(u.x, u.z, r) - 0.03, r, 0.02, 0.015, 0.01, a, 0);
   }
   for (const d of MS.deco) fxN.disc(d.x, d.z, decalY(d.x, d.z, 0.4) - 0.03, 0.4, 0.02, 0.015, 0.01, 0.3, 0);
+  // the Sultan's elite stand in a slow ring of gold
+  for (const u of G.units) if (u.elite && !u.dead && u.team === 1) { const r = u.def.cav ? 1.55 : 0.95, p = 0.5 + 0.5 * Math.sin(gtime * 3.2 + u.walkPh); fxA.disc(u.x, u.z, decalY(u.x, u.z, r) + 0.025, r, 2.0, 1.4, 0.45, 0.3 + p * 0.22, 4); }
   // the blade's mark: a thin pulsing ring under the enemy the next cut will find
   let tg = null;
   if (G.state === 'play' && PL.alive && PL.rearT <= 0) {
@@ -6855,7 +7229,7 @@ function frame(now) {
   step(dt);
   updateWorld(scene, null); updateCloths(CLOTH_DT); RS.focus = G.state === 'gallery' ? GAL.c : [PL.x, PL.y + 1.6, PL.z]; setCamera(); render();
   if (G.state === 'play' || G.state === 'pause' || G.state === 'over' || G.state === 'upgrade') { updateHud(dt); drawMini(); }
-  updateNums(dt); updateEBars(dt);
+  updateNums(dt); updateEBars(dt); updateCoins(dt);
 }
 function boot() {
   makeTouch(); makeAbil();
@@ -6872,7 +7246,7 @@ function boot() {
       initGL(); ASSETS = await unpackAssets(); fxN = new FXBatch(1800, false); fxA = new FXBatch(2400, true); psN = new PSys(700, false); psA = new PSys(1000, true); FLAMES = new FlameBatch(160);
       buildWorld(); buildModels(); buildGrass(RS.q === 'high' ? 1100 : 420);
       resetMods();
-      PL.rig = rigFor('hero'); scene.add(PL.rig.root);
+      PL.rig = rigFor('hero'); scene.add(PL.rig.root); heroLook();
       RS.max = maxPR(); RS.pr = Math.min(RS.max, RS.q === 'high' ? 1.15 : 1);
       resize(); ready = true;
       clearField(); G.state = 'title'; UI.hud.hidden = true; showScreen('title'); applyI18n(); resetHero(-16);
@@ -6885,8 +7259,7 @@ function boot() {
   }, 30);
 }
 window.__skb = { bot: false, G, PL, IN, CAM, RS, MS, MISSIONS, ENDLESS, step, startGame, beginGame, chooseUpgrade, UPGRADES, nextWave, spawnEnemy, setGfx, gatherInput, btnHeld, STICK, openMap, openBrief, openSettings, setTimeOfDay,
-  hud: () => { UI.cache = {}; MS.dirty = true; updateHud(0.016); drawMini(); drawMini(); drawMini(); drawMini(); updateNums(0.001); updateEBars(0.001); placeHint(); }, render: (f, cdt) => { updateWorld(scene, null); updateCloths(cdt || 0); RS.focus = f || null; setCamera(); render(); }, cloths: () => CLOTHS, tick: (dt) => { step(dt); updateWorld(scene, null); updateCloths(CLOTH_DT); } };
-if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
+  hud: () => { UI.cache = {}; MS.dirty = true; updateHud(0.016); drawMini(); drawMini(); drawMini(); drawMini(); updateNums(0.001); updateEBars(0.001); updateCoins(0.001); placeHint(); }, render: (f, cdt) => { updateWorld(scene, null); updateCloths(cdt || 0); RS.focus = f || null; setCamera(); render(); }, cloths: () => CLOTHS, tick: (dt) => { step(dt); updateWorld(scene, null); updateCloths(CLOTH_DT); updateCoins(dt); } };
 /* ===== Galeria: the sculpted warriors up close, orbit with drag / pinch / wheel ===== */
 const GAL_ITEMS = [
   { k: 'hero', horse: true }, { k: 'ally' }, { k: 'jan' }, { k: 'azap' }, { k: 'archer' },
@@ -6917,12 +7290,12 @@ function galShow(i) {
 function openGallery() {
   if (!ready) return;
   AU.init();
-  fadeSwap(() => { G.state = 'gallery'; resetInput(); showScreen('gallery'); applyI18n(); galShow(0); });
+  fadeSwap(() => { G.state = 'gallery'; resetInput(); showScreen('gallery'); applyI18n(); applyLook(PL.rig, 'white', 'red'); galShow(0); }); // the gallery shows him as history does, on his white horse
 }
 function closeGallery() {
   fadeSwap(() => {
     if (GAL.rig) { scene.remove(GAL.rig.root); GAL.rig = null; }
-    PL.rig.root.vis = true; G.state = 'title'; showScreen('title'); applyI18n(); resetHero(-16);
+    PL.rig.root.vis = true; G.state = 'title'; heroLook(); showScreen('title'); applyI18n(); resetHero(-16);
   });
 }
 function galUpdate(dt) {
@@ -6975,4 +7348,685 @@ function galUpdate(dt) {
     else if (e.code === 'Escape' || e.code === 'Backspace') closeGallery();
   });
 })();
+/* ===== Between battles: experience and levels, gold (dukatë), the armory, the hero's colours, medals, daily orders and the
+   daily challenge. The profile is kept in the browser (skb_prof); whatever a battle earns is credited the moment it is earned. ===== */
+
+/* ---- tables ---- */
+const GOLDV = { azap: 2, jan: 3, archer: 3, sipahi: 5, ram: 8, agha: 25, pasha: 50, ali: 50, ballaban: 100 };
+const LV_MAX = 50, TITLE_LV = [1, 3, 6, 10, 15, 20, 30, 40, 50];
+const lvNeed = L => 100 + 50 * L + 10 * L * L; // experience from level L to the next
+const ARMS = [
+  { id: 'sword', ic: 'atk', cat: 'sword', cost: [60, 150, 300, 550, 950] },
+  { id: 'armor', ic: 'body', cat: 'body', cost: [60, 150, 300, 550, 950] },
+  { id: 'horse', ic: 'horse', cat: 'horse', cost: [80, 180, 350, 620, 1000] },
+  { id: 'jav', ic: 'jav', cat: 'jav', cost: [80, 180, 350, 620, 1000] },
+  { id: 'cry', ic: 'cry', cat: 'allies', cost: [80, 180, 350, 620, 1000] }
+];
+function armFx(id, n) {
+  switch (id) {
+    case 'sword': return { dmg: 1 + 0.07 * n };
+    case 'armor': return { hp: 100 + 12 * n };
+    case 'horse': return { speed: 1 + 0.03 * n, dash: 1 - 0.06 * n };
+    case 'jav': return { max: 3 + (n >= 2) + (n >= 4), regen: 1 + 0.2 * ((n >= 1) + (n >= 3) + (n >= 5)), pierce: n >= 5 ? 2 : 1 };
+    default: return { glory: 1 + 0.1 * ((n >= 1) + (n >= 2) + (n >= 4)), heal: n >= 3 ? 40 : 25, allies: n >= 5 ? 6 : 4 };
+  }
+}
+/* the horse's coat: target colour (linear), dapples, how dark the legs go, mane; sw/mane are the swatch colours */
+const COATS = [
+  { id: 'white', sw: ['#f1eee7', '#aaa59b'], mane: '#fbfaf5' },
+  { id: 'grey', cost: 150, coat: [0.24, 0.24, 0.235], dap: 1.7, legK: 1.3, hair: [0.15, 0.145, 0.14], sw: ['#b4b4ae', '#55554f'], mane: '#3e3e3a' },
+  { id: 'bay', cost: 260, coat: [0.2, 0.068, 0.025], dap: 0.3, legK: 2.6, hair: [0.01, 0.008, 0.007], sw: ['#b0623a', '#5a2810'], mane: '#120e0c' },
+  { id: 'black', cost: 420, coat: [0.02, 0.018, 0.017], dap: 0, legK: 0.5, hair: [0.008, 0.007, 0.007], sw: ['#4a4542', '#0f0d0c'], mane: '#050404' },
+  { id: 'chestnut', lvl: 8, coat: [0.32, 0.105, 0.035], dap: 0.25, legK: 1.1, hair: [0.42, 0.25, 0.1], sw: ['#cf7a40', '#7a3412'], mane: '#e2b46a' },
+  { id: 'golden', cost: 900, coat: [0.55, 0.36, 0.13], dap: 0.35, legK: 1.15, hair: [0.8, 0.74, 0.62], sw: ['#f6dc9c', '#b58a3c'], mane: '#fff8e6' }
+];
+/* banner colours: c replaces the red cloth on rider and horse (linear); cape is the cape canvas colour; dec the eagle patches */
+const BANS = [
+  { id: 'red', sw: '#9b1b17', swE: '#140c0a' },
+  { id: 'ivory', cost: 200, c: [0.5, 0.45, 0.36], cape: [107, 102, 92], eagle: '#050303', lin: [0.2, 0.18, 0.15], dec: '#aba293', sw: '#e6dcc6', swE: '#140c0a' },
+  { id: 'black', lvl: 5, c: [0.022, 0.02, 0.019], cape: [24, 23, 22], eagle: '#a8701c', lin: [0.012, 0.011, 0.011], dec: '#272524', decE: '#d4a63c', sw: '#1f1a19', swE: '#d9ad48' },
+  { id: 'blue', cost: 380, c: [0.02, 0.06, 0.24], cape: [23, 39, 75], eagle: '#a8701c', lin: [0.01, 0.025, 0.08], dec: '#26407a', decE: '#d4a63c', sw: '#2a4a8c', swE: '#d9ad48' },
+  { id: 'purple', lvl: 12, c: [0.16, 0.02, 0.14], cape: [62, 23, 59], eagle: '#a8701c', lin: [0.05, 0.008, 0.045], dec: '#65265e', decE: '#d4a63c', sw: '#6a2464', swE: '#d9ad48' },
+  { id: 'gold', medal: 'stars12', c: [0.48, 0.3, 0.06], cape: [105, 84, 39], eagle: '#050303', gold: '#5a0d08', lin: [0.15, 0.1, 0.03], dec: '#a78740', decB: '#6a1410', sw: '#d9ad48', swE: '#140c0a' }
+];
+const totalStars = () => MISSIONS.reduce((a, m) => a + PROG.stars(m.id), 0);
+const MEDALS = [
+  { id: 'first', ic: 'atk', g: 10, n: P => P.st.kills, goal: 1 },
+  { id: 'k100', ic: 'atk', g: 40, n: P => P.st.kills, goal: 100 },
+  { id: 'k1000', ic: 'atk', g: 150, n: P => P.st.kills, goal: 1000 },
+  { id: 'k5000', ic: 'crown', g: 400, n: P => P.st.kills, goal: 5000 },
+  { id: 'par25', ic: 'blk', g: 60, n: P => P.st.parries, goal: 25 },
+  { id: 'jav50', ic: 'jav', g: 60, n: P => P.st.javKills, goal: 50 },
+  { id: 'str12', ic: 'bolt', g: 50, n: P => P.st.bestStreak, goal: 12 },
+  { id: 'str25', ic: 'bolt', g: 120, n: P => P.st.bestStreak, goal: 25 },
+  { id: 'chg5', ic: 'dash', g: 50 },
+  { id: 'stp5', ic: 'spin', g: 50 },
+  { id: 'hvy4', ic: 'atk', g: 50 },
+  { id: 'boss10', ic: 'crown', g: 100, n: P => P.st.bosses, goal: 10 },
+  { id: 'elite10', ic: 'star', g: 60, n: P => P.st.elites, goal: 10 },
+  { id: 'cry20', ic: 'cry', g: 60, n: P => P.st.cries, goal: 20 },
+  { id: 'torvioll', ic: 'laurel', g: 40, prog: true, n: () => PROG.stars('torvioll') ? 1 : 0, goal: 1 },
+  { id: 'kruja', ic: 'gate', g: 60, prog: true, n: () => PROG.stars('kruja') ? 1 : 0, goal: 1 },
+  { id: 'raid', ic: 'flame', g: 60, prog: true, n: () => PROG.stars('raid') ? 1 : 0, goal: 1 },
+  { id: 'duel', ic: 'laurel', g: 80, prog: true, n: () => PROG.stars('duel') ? 1 : 0, goal: 1 },
+  { id: 'stars3', ic: 'star', g: 40, prog: true, n: () => MISSIONS.some(m => PROG.stars(m.id) >= 3) ? 1 : 0, goal: 1 },
+  { id: 'stars12', ic: 'star', g: 300, prog: true, n: totalStars, goal: 12 },
+  { id: 'flawless', ic: 'blk', g: 120 },
+  { id: 'wave15', ic: 'gate', g: 100, n: P => P.st.bestWave, goal: 15 },
+  { id: 'wave25', ic: 'gate', g: 250, n: P => P.st.bestWave, goal: 25 },
+  { id: 'daily1', ic: 'sun', g: 30, n: P => P.st.dailies, goal: 1 },
+  { id: 'daily7', ic: 'sun', g: 200, n: P => P.st.bestDStreak, goal: 7 },
+  { id: 'maxed', ic: 'atk', g: 80, n: P => Math.max(...Object.values(P.up)), goal: 5 }
+];
+const ORDERS = [
+  { id: 'k60', s: 'kills', n: 60, g: 35 }, { id: 'k150', s: 'kills', n: 150, g: 70 }, { id: 'par', s: 'parries', n: 6, g: 45 },
+  { id: 'jav', s: 'javKills', n: 8, g: 40 }, { id: 'chg', s: 'chargeHits', n: 15, g: 40 }, { id: 'stp', s: 'stompHits', n: 12, g: 40 },
+  { id: 'hvy', s: 'heavyKills', n: 8, g: 40 }, { id: 'bos', s: 'bosses', n: 2, g: 55 }, { id: 'eli', s: 'elites', n: 3, g: 45 },
+  { id: 'wav', s: 'waves', n: 8, g: 50 }, { id: 'cry', s: 'cries', n: 3, g: 40 }, { id: 'win', s: 'wins', n: 1, g: 40 },
+  { id: 'sip', s: 'sipahi', n: 6, g: 45 }, { id: 'arc', s: 'archers', n: 12, g: 40 }, { id: 'str', s: 'streak', n: 10, g: 45, max: true }
+];
+const ORD_BONUS = 60, DAILY_GOAL = 5;
+const DMODS = ['cav', 'archers', 'rams', 'elite', 'bosses', 'fury', 'swift', 'javs', 'nogift'];
+const DMOD_LOOK = { cav: ['dash', 'horse'], archers: ['bow', 'allies'], rams: ['gate', 'gate'], elite: ['star', 'jav'], bosses: ['crown', 'body'], fury: ['flame', 'body'], swift: ['bolt', 'horse'], javs: ['jav', 'jav'], nogift: ['coin', 'jav'] };
+const STREAK_TIERS = [[5, 5], [8, 10], [12, 20], [20, 40]]; // kills in a row and the gold it pays
+Object.assign(ICON, {
+  crown: '<path d="M4 18h16M5 18L4 8l5 4 3-7 3 7 5-4-1 10"/>',
+  flame: '<path d="M12 3c1 3.6 5 5.4 5 10.2A5 5 0 0 1 7 13.2c0-2.3 1.2-4 2.6-5.1.3 1.8 1.1 2.9 2.4 3.3C11.3 9.2 11 6.3 12 3z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  laurel: '<path d="M12 21c-4.2-1-7.2-4.8-7.2-10M12 21c4.2-1 7.2-4.8 7.2-10"/><path d="M5.6 14.2c1.6.2 2.8-.5 3.2-1.8M5 10.4c1.4.3 2.6-.3 3.1-1.5M18.4 14.2c-1.6.2-2.8-.5-3.2-1.8M19 10.4c-1.4.3-2.6-.3-3.1-1.5M12 3.5v4"/>',
+  star: '<path d="M12 3.2l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.5l6-.7z"/>',
+  bolt: '<path d="M13.5 2.5L5 13.5h6.2L10 21.5l8.8-11.2h-6.3z"/>',
+  coin: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/>',
+  share: '<path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6.5"/>'
+});
+
+/* ---- the profile ---- */
+const META = { P: null, run: null, saveTO: 0, shown: null, coinsT: 0 };
+function profNew() {
+  return {
+    v: 1, xp: 0, gold: 0, goldAll: 0, up: { sword: 0, armor: 0, horse: 0, jav: 0, cry: 0 }, own: { coat: ['white'], ban: ['red'] }, eq: { coat: 'white', ban: 'red' }, medals: {},
+    st: { kills: 0, bosses: 0, elites: 0, parries: 0, javKills: 0, heavyKills: 0, cries: 0, wins: 0, battles: 0, waves: 0, bestStreak: 0, bestWave: 0, dailies: 0, bestDStreak: 0 },
+    day: { id: '', prog: {}, got: [], all: false, best: 0, done: false }, dStreak: 0, dLast: '', seenMed: 0
+  };
+}
+function profLoad() {
+  const P = profNew(), s = store.get('prof', null);
+  if (!s || typeof s !== 'object') return P;
+  const num = (v, d) => typeof v === 'number' && isFinite(v) && v >= 0 ? v : d;
+  P.xp = num(s.xp, 0); P.gold = Math.floor(num(s.gold, 0)); P.goldAll = num(s.goldAll, P.gold);
+  for (const k in P.up) P.up[k] = Math.min(5, Math.floor(num(s.up && s.up[k], 0)));
+  for (const [k, list] of [['coat', COATS], ['ban', BANS]]) {
+    const o = s.own && Array.isArray(s.own[k]) ? s.own[k] : [];
+    for (const id of o) if (list.some(c => c.id === id) && !P.own[k].includes(id)) P.own[k].push(id);
+    if (s.eq && P.own[k].includes(s.eq[k])) P.eq[k] = s.eq[k];
+  }
+  if (s.medals && typeof s.medals === 'object') for (const m of MEDALS) if (s.medals[m.id]) P.medals[m.id] = 1;
+  if (s.st) for (const k in P.st) P.st[k] = num(s.st[k], 0);
+  if (s.day && typeof s.day.id === 'string') {
+    P.day.id = s.day.id; if (s.day.prog) for (const k in s.day.prog) P.day.prog[k] = num(s.day.prog[k], 0);
+    P.day.got = Array.isArray(s.day.got) ? s.day.got.filter(x => typeof x === 'string') : []; P.day.all = !!s.day.all; P.day.best = num(s.day.best, 0); P.day.done = !!s.day.done;
+  }
+  P.dStreak = num(s.dStreak, 0); P.dLast = typeof s.dLast === 'string' ? s.dLast : ''; P.seenMed = num(s.seenMed, 0);
+  return P;
+}
+function profSave(now) { clearTimeout(META.saveTO); if (now) store.set('prof', META.P); else META.saveTO = setTimeout(() => store.set('prof', META.P), 1500); }
+function lvOf(xp) { let L = 1, x = Math.max(0, xp); while (L < LV_MAX && x >= lvNeed(L)) { x -= lvNeed(L); L++; } return { L, into: x, need: L < LV_MAX ? lvNeed(L) : 1, max: L >= LV_MAX }; }
+function titleOf(L) { let k = 0; TITLE_LV.forEach((v, i) => { if (L >= v) k = i; }); return SQ.titles[k]; }
+const fmtN = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0'); // 1 000, as written in Albanian
+const lc = s => s.charAt(0).toLowerCase() + s.slice(1);
+const inBattle = () => G.state === 'play' || G.state === 'pause' || G.state === 'upgrade';
+
+/* ---- earning ---- */
+function addXp(n) {
+  const P = META.P, a = lvOf(P.xp).L; P.xp += Math.round(n); const b = lvOf(P.xp).L;
+  if (b <= a) return;
+  let g = 0;
+  for (let L = a + 1; L <= b; L++) { g += 10 + 5 * L; if (META.run && !META.run.ended) META.run.levels.push(L); }
+  P.gold += g; P.goldAll += g;
+  if (inBattle()) { toast('crown', t('tLevel', b), titleOf(b), g); AU.level(); } // several levels at once make one announcement
+  checkMedals();
+}
+function earn(g, xpPer = 4) { const P = META.P; if (!P || !g) return; g = Math.round(g); P.gold += g; P.goldAll += g; addXp(g * xpPer); profSave(); }
+
+/* ---- a battle: start, kills and events, end ---- */
+function metaBegin(m) {
+  if (META.run && !META.run.ended) metaLeave();
+  const P = META.P; syncDay();
+  META.run = { m, gold0: P.gold, xp0: P.xp, lv0: lvOf(P.xp), medals: [], orders: [], levels: [], daily: 0, ended: false, tier: -1 };
+  const u = P.up, mo = G.mods;
+  mo.dmg *= armFx('sword', u.sword).dmg;
+  PL.maxHp = armFx('armor', u.armor).hp; PL.hp = PL.maxHp;
+  const hf = armFx('horse', u.horse); mo.speed *= hf.speed; mo.dashCd *= hf.dash;
+  const jf = armFx('jav', u.jav); JAV_MAX = jf.max; mo.javRegen *= jf.regen; G.javPierce = jf.pierce;
+  const cf = armFx('cry', u.cry); mo.glory *= cf.glory; G.cryHeal = cf.heal; G.cryAllies = cf.allies;
+  G.eliteP = m.daily ? (G.dmods.includes('elite') ? 0.2 : 0.08) : m.endless ? 0.08 : m.id === 'duel' ? 0 : 0.04;
+  if (m.post) m.post();
+  PL.jav = JAV_MAX; setPipCount(JAV_MAX);
+  UI.goldShown = 0; for (const c of COINS) { c.t = -1; c.el.hidden = true; } renderGoldBox(true);
+}
+function metaKill(u, src) {
+  const P = META.P, R = META.run; if (!P || !R || R.ended || u.team !== 1) return;
+  const st = P.st;
+  st.kills++; bump('kills');
+  if (u.def.boss) { st.bosses++; bump('bosses'); }
+  if (u.elite) { st.elites++; bump('elites'); }
+  if (u.type === 'sipahi') bump('sipahi'); else if (u.type === 'archer') bump('archers');
+  if (src === 'jav') { st.javKills++; bump('javKills'); } else if (src === 'heavy') { st.heavyKills++; bump('heavyKills'); }
+  if (G.streak > st.bestStreak) st.bestStreak = G.streak;
+  bump('streak', G.streak, true);
+  const g = Math.round((GOLDV[u.type] || 2) * (u.elite ? 5 : 1) * (G.goldK || 1));
+  earn(g); project(u.x, u.y + (u.def.cav ? 2.4 : 1.7), u.z, _pp); if (_pp.ok) spawnCoins(g, _pp.x, _pp.y);
+  // a run of kills pays a bonus at each step, called out beside the counter
+  const ti = STREAK_TIERS.findIndex(s => s[0] === G.streak);
+  if (ti >= 0) { const b = STREAK_TIERS[ti][1]; earn(b); R.tier = ti; AU.tier(); const r = $('streak').getBoundingClientRect(); spawnCoins(b, r.width ? r.left + r.width / 2 : innerWidth - 60, r.width ? r.top + 20 : innerHeight * 0.36); }
+  checkMedals();
+}
+function metaEvent(name, a) {
+  const P = META.P, R = META.run; if (!P || !R || R.ended) return;
+  switch (name) {
+    case 'parry': P.st.parries++; bump('parries'); break;
+    case 'cry': P.st.cries++; bump('cries'); break;
+    case 'heavy': if (a >= 4) giveMedal('hvy4'); break;
+    case 'stomp': bump('stompHits', a); if (a >= 5) giveMedal('stp5'); break;
+    case 'trample': bump('chargeHits'); if (a >= 5) giveMedal('chg5'); break;
+    case 'wave': {
+      P.st.waves++; bump('waves');
+      if (R.m.endless && a > P.st.bestWave) P.st.bestWave = a;
+      if (R.m.daily) { syncDay(); P.day.best = Math.max(P.day.best, a); }
+      earn(10, 3); break;
+    }
+  }
+  checkMedals();
+}
+function metaEnd(win, nStars) {
+  const P = META.P, R = META.run; if (!P || !R || R.ended) return R;
+  const m = R.m; P.st.battles++;
+  if (win && !m.endless) {
+    P.st.wins++; bump('wins'); earn(60, 2.5); if (nStars) earn(25 * nStars, 2.4);
+    giveMedal(m.id); if (PL.minHp >= 0.9) giveMedal('flawless');
+  }
+  checkMedals(true); R.ended = true; profSave(true);
+  return R;
+}
+function metaLeave() { const R = META.run; if (R && !R.ended) { R.ended = true; profSave(true); } }
+
+/* ---- medals ---- */
+const MEDAL_BY = {}; for (const m of MEDALS) MEDAL_BY[m.id] = m;
+function giveMedal(id) {
+  const P = META.P, m = MEDAL_BY[id]; if (!P || !m || P.medals[id]) return;
+  P.medals[id] = 1; P.gold += m.g; P.goldAll += m.g; addXp(m.g * 2);
+  if (META.run && !META.run.ended) META.run.medals.push(id);
+  if (G.state !== 'over') { toast(m.ic, t('tMedal'), SQ.med[id][0], m.g); AU.medal(); }
+  profSave();
+}
+// the campaign medals read the saved stars, so they are only looked at between battles and when one ends
+function checkMedals(all) { const P = META.P; if (!P) return; for (const m of MEDALS) if (!P.medals[m.id] && m.n && (all || !m.prog) && m.n(P) >= m.goal) giveMedal(m.id); }
+const medalsEarned = () => MEDALS.filter(m => META.P.medals[m.id]).length;
+
+/* ---- the day: orders and the challenge, the same for everyone on the same date ---- */
+function dayId(off = 0) { const d = new Date(); d.setDate(d.getDate() + off); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function seeded(str) {
+  let a = 2166136261; for (let i = 0; i < str.length; i++) a = Math.imul(a ^ str.charCodeAt(i), 16777619);
+  return () => { a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; };
+}
+const PLANS = {};
+function dayPlan(id = dayId()) {
+  if (PLANS[id]) return PLANS[id];
+  const r = seeded('skb:' + id), take = arr => arr.splice(Math.floor(r() * arr.length), 1)[0];
+  const tod = ['dawn', 'day', 'dusk', 'night'][Math.floor(r() * 4)], pool = DMODS.slice(), mods = [take(pool), take(pool)];
+  const op = ORDERS.slice(), orders = [];
+  while (orders.length < 3 && op.length) { const o = take(op); if (!orders.some(q => q.s === o.s)) orders.push(o); }
+  return (PLANS[id] = { id, tod, mods, orders });
+}
+function syncDay() { const P = META.P, id = dayId(); if (P.day.id !== id) P.day = { id, prog: {}, got: [], all: false, best: 0, done: false }; }
+function bump(stat, n = 1, max) {
+  const P = META.P; syncDay(); const p = P.day.prog;
+  p[stat] = max ? Math.max(p[stat] || 0, n) : (p[stat] || 0) + n;
+  for (const o of dayPlan(P.day.id).orders) if (o.s === stat && !P.day.got.includes(o.id) && p[stat] >= o.n) {
+    P.day.got.push(o.id); P.gold += o.g; P.goldAll += o.g; addXp(o.g * 3);
+    if (META.run && !META.run.ended) META.run.orders.push(o);
+    if (G.state !== 'over') { toast('flag2', t('tOrder'), ordText(o), o.g); AU.medal(); }
+    if (P.day.got.length >= 3 && !P.day.all) { P.day.all = true; P.gold += ORD_BONUS; P.goldAll += ORD_BONUS; if (META.run && !META.run.ended) META.run.orders.push({ id: 'all', g: ORD_BONUS }); if (G.state !== 'over') toast('crown', t('tOrders'), t('ordAll'), ORD_BONUS); }
+  }
+}
+ICON.flag2 = '<path d="M6 21V3.5"/><path d="M6 4.5h11l-2.6 3.8L17 12H6"/>';
+const ordText = o => t('ord')[o.s].replace('{0}', o.n);
+function streakNext() { const P = META.P; return P.dLast === dayId() ? P.dStreak : P.dLast === dayId(-1) ? P.dStreak + 1 : 1; }
+function streakNow() { const P = META.P; return P.dLast === dayId() || P.dLast === dayId(-1) ? P.dStreak : 0; }
+const dailyGold = s => 80 + Math.min(100, 20 * (s - 1));
+function untilTomorrow() {
+  const n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1), s = Math.max(60, (m - n) / 1000), h = Math.floor(s / 3600), mi = Math.ceil(s / 60);
+  return h >= 1 ? (h === 1 ? '1 ore' : h + ' orësh') : mi === 1 ? '1 minute' : mi + ' minutash';
+}
+function dailyComplete() {
+  const P = META.P; syncDay(); if (P.day.done) return;
+  const s = streakNext(); P.day.done = true; P.dStreak = s; P.dLast = P.day.id; P.st.dailies++; if (s > P.st.bestDStreak) P.st.bestDStreak = s;
+  const g = dailyGold(s); earn(g, 3); if (META.run) META.run.daily = g;
+  banner(t('dDone'), t('dDoneSub', g), false); AU.fanfare();
+  checkMedals(); profSave(true);
+}
+/* the daily challenge: the endless defence of Krujë under two rules of the day, done once five waves are held */
+const DAILY = {
+  id: 'daily', arena: ARENA0, gate: true, waves: true, upgrades: true, endless: true, daily: true, stars: [],
+  get tod() { return dayPlan().tod; },
+  setup() {
+    G.dmods = dayPlan().mods.slice(); const M = G.dmods;
+    setObj([['oDaily', DAILY_GOAL], ['oGate', 0]]); resetHero(-17); G.wave = 0;
+    if (M.includes('fury')) G.foeDmg = 1.5;
+    if (M.includes('swift')) G.foeSpd = 1.22;
+    if (M.includes('nogift')) { G.noGifts = true; G.goldK = 2; }
+    if (M.includes('rams')) { G.gateHp = G.gateMax * 0.75; updateGateTint(); }
+    nextWave();
+  },
+  post() { // after the armory, so these stack on top of it
+    const M = G.dmods;
+    if (M.includes('fury')) G.mods.dmg *= 1.5;
+    if (M.includes('swift')) G.mods.dashCd *= 0.6;
+    if (M.includes('javs')) { JAV_MAX += 2; G.mods.javRegen *= 2.5; }
+  },
+  update(dt) { updateWaves(dt); },
+  onEvent(n, a) { if (n === 'waveHeld') { MS.obj[0].n = Math.min(DAILY_GOAL, a); MS.dirty = true; if (a >= DAILY_GOAL && !MS.obj[0].done) { objDone(0); dailyComplete(); } } },
+  waveSub(w) { return w < DAILY_GOAL ? t('dSub', DAILY_GOAL - w + 1) : w === DAILY_GOAL ? t('dSubLast') : t('subE'); }
+};
+function dailyWave(d0, w) {
+  const d = Object.assign({}, d0), M = G.dmods;
+  if (M.includes('cav')) { d.sipahi = (d.sipahi || 0) + 2 + (w >> 1); d.azap = Math.max(2, (d.azap || 0) - 2); }
+  if (M.includes('archers')) d.archer = (d.archer || 0) * 2 + 3;
+  if (M.includes('rams')) d.ram = Math.max(1, d.ram || 0) + (w >= 4 ? 1 : 0);
+  if (M.includes('bosses') && w % 2 === 0) d.agha = 1;
+  return d;
+}
+
+/* ---- the hero's colours ---- */
+const LOOKS = {}, DECALS = {};
+let DECAL0 = null;
+function lookOf(coatId, banId) {
+  const key = coatId + '/' + banId; if (LOOKS[key]) return LOOKS[key];
+  const c = COATS.find(x => x.id === coatId) || COATS[0], b = BANS.find(x => x.id === banId) || BANS[0];
+  const L = { ban: new Float32Array(4), coat: new Float32Array(4), hair: new Float32Array(4) };
+  if (b.c) L.ban.set([b.c[0], b.c[1], b.c[2], 1]);
+  if (c.coat) { L.coat.set([c.coat[0], c.coat[1], c.coat[2], c.dap]); L.hair.set([c.hair[0], c.hair[1], c.hair[2], c.legK]); }
+  return (LOOKS[key] = L);
+}
+function decalMesh(b) {
+  if (!b.dec) return null; if (DECALS[b.id]) return DECALS[b.id];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const e = cv.getContext('2d');
+  e.fillStyle = b.dec; e.fillRect(0, 0, 128, 128); e.strokeStyle = b.decB || '#d4a63c'; e.lineWidth = 7; e.strokeRect(4, 4, 120, 120);
+  drawEagle(e, 64, 66, 82, b.decE || '#0d0b0b');
+  return (DECALS[b.id] = planeMesh(0.5, 0.5, 1, 1, makeTex(cv)));
+}
+function applyLook(rig, coatId, banId) {
+  if (!rig || !gl) return;
+  const L = lookOf(coatId, banId), b = BANS.find(x => x.id === banId) || BANS[0];
+  if (rig.root.skin) rig.root.skin.look = L;
+  if (rig.rs && rig.rs.root.skin) rig.rs.root.skin.look = L;
+  if (rig.cape) { rig.cape.mesh.tex = b.cape ? capeTex('hero', { id: b.id, base: b.cape, eagle: b.eagle, gold: b.gold }) : capeTex('hero'); rig.cape.setLining(b.lin || [0.09, 0.012, 0.01]); }
+  if (rig.decals) { if (!DECAL0) DECAL0 = rig.decals[0].mesh; const m = decalMesh(b) || DECAL0; for (const d of rig.decals) d.mesh = m; }
+}
+function heroLook() { if (PL.rig && META.P) applyLook(PL.rig, META.P.eq.coat, META.P.eq.ban); }
+/* what a colour takes: 'on' worn, 'own' yours, 'buy' affordable, 'cost' not yet, 'lvl' or 'medal' still locked */
+function lookState(kind, it) {
+  const P = META.P;
+  if (P.eq[kind] === it.id) return 'on';
+  if (P.own[kind].includes(it.id)) return 'own';
+  if (it.lvl && lvOf(P.xp).L < it.lvl) return 'lvl';
+  if (it.medal && !P.medals[it.medal]) return 'medal';
+  if (it.cost) return P.gold >= it.cost ? 'buy' : 'cost';
+  return 'own';
+}
+function canBuyAny() {
+  const P = META.P;
+  if (ARMS.some(a => P.up[a.id] < 5 && P.gold >= a.cost[P.up[a.id]])) return true;
+  return COATS.some(c => lookState('coat', c) === 'buy') || BANS.some(b => lookState('ban', b) === 'buy');
+}
+
+/* ---- the purse in battle: coins fly from the fallen to the counter ---- */
+UI.goldShown = 0;
+const COINS = [];
+for (let i = 0; i < 28; i++) { const el = document.createElement('i'); el.className = 'fcoin duk'; el.hidden = true; UI.dmg.appendChild(el); COINS.push({ el, t: -1, d: 0.6, x0: 0, y0: 0, x1: 0, y1: 0, v: 0 }); }
+function runGold() { const R = META.run; return R ? META.P.gold - R.gold0 : 0; }
+function renderGoldBox(force) { const s = fmtN(UI.goldShown); if (force || UI.cache.goldN !== s) { UI.cache.goldN = s; $('goldN').textContent = s; } }
+function spawnCoins(value, sx, sy) {
+  const box = $('goldBox'); if (!box || UI.hud.hidden || reduceMotion) { UI.goldShown += value; renderGoldBox(); return; }
+  const r = box.getBoundingClientRect(); if (!r.width) { UI.goldShown += value; renderGoldBox(); return; }
+  const n = Math.min(5, Math.max(1, Math.ceil(value / 4))), tx = r.left + 16, ty = r.top + r.height / 2;
+  let left = value;
+  for (let i = 0; i < n; i++) {
+    const c = COINS.find(q => q.t === -1); const v = i === n - 1 ? left : Math.floor(value / n); left -= v;
+    if (!c) { UI.goldShown += v; continue; }
+    Object.assign(c, { t: -i * 0.06, d: 0.55 + Math.random() * 0.2, x0: sx + rand(-14, 14), y0: sy + rand(-10, 10), x1: tx, y1: ty, v, a: rand(-60, 60) });
+  }
+  renderGoldBox();
+}
+function updateCoins(dt) {
+  let fly = 0;
+  for (const c of COINS) {
+    if (c.t === -1) continue;
+    c.t += dt; if (c.t < 0) { fly++; continue; }
+    const k = c.t / c.d;
+    if (k >= 1) { c.t = -1; c.el.hidden = true; UI.goldShown += c.v; renderGoldBox(); AU.coin(); const b = $('goldBox'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); continue; }
+    fly++;
+    const e = k * k * (3 - 2 * k), cx = c.x0 + c.a, cy = Math.min(c.y0, c.y1) - 70;
+    const x = (1 - e) * (1 - e) * c.x0 + 2 * (1 - e) * e * cx + e * e * c.x1, y = (1 - e) * (1 - e) * c.y0 + 2 * (1 - e) * e * cy + e * e * c.y1, s = 1.25 - 0.45 * e;
+    c.el.hidden = false; c.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${s.toFixed(2)})`;
+  }
+  if (!fly && META.run && UI.goldShown !== runGold()) { UI.goldShown = runGold(); renderGoldBox(); }
+}
+function setPipCount(n) {
+  for (const el of [TB.jav, AB.jav]) { if (!el) continue; const p = el.querySelector('.pips'); if (p && p.children.length !== n) p.innerHTML = '<i></i>'.repeat(n); }
+  delete UI.cache.tp; delete UI.cache.ap;
+}
+
+/* ---- toasts: medals, orders and levels as they happen ---- */
+/* in battle the toasts stack under the hero's meters, clear of the objectives, the commander's bar and the hints */
+function toastTop() {
+  let y = $('hudL').getBoundingClientRect().bottom;
+  for (const id of ['obj', 'boss', 'hint']) { const el = $(id); if (el.hidden || UI.hud.hidden) continue; const r = el.getBoundingClientRect(); if (r.width && r.left < 360) y = Math.max(y, r.bottom); }
+  return Math.round(y + 10);
+}
+function toast(icon, kicker, name, gold) {
+  const box = $('toasts'), fight = inBattle(); box.classList.toggle('top', !fight); box.style.top = fight ? toastTop() + 'px' : '';
+  const el = document.createElement('div'); el.className = 'toast';
+  el.innerHTML = `<span class="ms">${svgI(icon)}</span><span><span class="tk"></span><span class="tn"></span></span>` + (gold ? `<span class="tg num"><i class="duk"></i> +${fmtN(gold)}</span>` : '');
+  el.querySelector('.tk').textContent = kicker; el.querySelector('.tn').textContent = name;
+  box.appendChild(el); while (box.children.length > (innerWidth <= 640 ? 2 : 3)) box.firstChild.remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 480); }, META.toastMs || 3800);
+}
+
+/* ---- the title: profile, the day's challenge, things to buy ---- */
+function renderProf() {
+  const P = META.P; if (!P) return; const lv = lvOf(P.xp);
+  $('pLvl').textContent = lv.L; $('pTitle').textContent = titleOf(lv.L); $('pGold').textContent = fmtN(P.gold);
+  $('pXp').style.transform = `scaleX(${lv.max ? 1 : (lv.into / lv.need).toFixed(3)})`;
+  $('prof').setAttribute('aria-label', t('profA', lv.L, titleOf(lv.L), fmtN(P.gold)));
+}
+function renderMenuExtras() {
+  const P = META.P; if (!P) return; syncDay();
+  const plan = dayPlan();
+  $('mDailyD').textContent = P.day.done ? t('mDailyDone', SQ.days(P.dStreak)) : t('mDailyD', plan.mods.map(k => lc(SQ.dm[k][0])).join(' dhe '));
+  $('mDaily').classList.toggle('new', !P.day.done);
+  $('mArmory').classList.toggle('new', canBuyAny() || medalsEarned() > P.seenMed);
+  renderProf();
+}
+
+/* ---- the armory: arms, looks, medals ---- */
+UI.armTab = 'arms';
+function openArmory(tab) {
+  if (!ready) return; AU.init();
+  UI.shot = null; if (ATM.tod !== TITLE_TOD) setTimeOfDay(TITLE_TOD);
+  UI.armTab = tab || UI.armTab || 'arms';
+  renderArmory(); showScreen('armory', '#aTabs [aria-selected="true"]');
+}
+function closeArmory() { heroLook(); $('armory').classList.remove('peek'); UI.peek = false; toTitleMenu(); }
+function renderArmory() {
+  const P = META.P, tab = UI.armTab;
+  $('aGold').textContent = fmtN(P.gold);
+  for (const b of $('aTabs').children) { const on = b.dataset.tab === tab; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; }
+  $('aTabs').querySelector('[data-tab="medals"]').classList.toggle('new', medalsEarned() > P.seenMed);
+  for (const [id, k] of [['aArms', 'arms'], ['aLooks', 'looks'], ['aMedals', 'medals']]) $(id).hidden = tab !== k;
+  $('armory').classList.toggle('peek', tab === 'looks'); UI.peek = tab === 'looks';
+  if (tab === 'arms') renderArms(); else if (tab === 'looks') renderLooks(); else renderMedals();
+}
+function armTab(tab, focusTab) { UI.armTab = tab; heroLook(); renderArmory(); AU.tick(); if (focusTab) $('aTabs').querySelector(`[data-tab="${tab}"]`).focus({ preventScroll: true }); }
+function renderArms(focusId) {
+  const P = META.P, box = $('aArms'); box.textContent = '';
+  for (const a of ARMS) {
+    const n = P.up[a.id], L = SQ.arm[a.id], cc = CATC[a.cat], full = n >= 5, cost = full ? 0 : a.cost[n], can = !full && P.gold >= cost;
+    const b = document.createElement('button'); b.className = 'arm' + (full ? ' full' : can ? ' can' : ' short'); b.dataset.id = a.id;
+    b.style.setProperty('--c1', cc[0]); b.style.setProperty('--c2', cc[1]);
+    b.innerHTML = `<span class="seal">${svgI(a.ic)}</span><span class="an"></span><span class="rank" aria-hidden="true">${[0, 1, 2, 3, 4].map(k => `<i class="${k < n ? 'on' : k === n ? 'nx' : ''}"></i>`).join('')}</span><span class="av"></span><span class="price num"></span>`;
+    b.querySelector('.an').textContent = SQ.armName(a.id, Math.max(1, n));
+    const av = b.querySelector('.av'), st = armStat(a.id, n);
+    if (full) av.textContent = t('armMax');
+    else if (st) { av.innerHTML = `<span></span><span class="from"></span>${ARROW}<b></b>`; av.children[0].textContent = L[2]; av.children[1].textContent = st[0]; av.querySelector('b').textContent = st[1]; }
+    else av.textContent = SQ.armT[a.id][n];
+    const pr = b.querySelector('.price');
+    if (!full) { pr.innerHTML = '<span><i class="duk"></i><b></b></span>' + (can ? '' : '<small></small>'); pr.querySelector('b').textContent = fmtN(cost); if (!can) pr.querySelector('small').textContent = t('armNeed', fmtN(cost - P.gold)); }
+    b.setAttribute('aria-label', `${SQ.armName(a.id, Math.max(1, n))}. ${t('armLv', n)}. ${full ? t('armMax') : (st ? L[2] + ' ' + st[0] + ', pastaj ' + st[1] : SQ.armT[a.id][n]) + '. ' + t('armBuy', fmtN(cost))}`);
+    b.addEventListener('click', () => buyArm(a.id, b));
+    box.appendChild(b);
+  }
+  if (focusId) { const f = box.querySelector(`[data-id="${focusId}"]`); if (f && !touchMode) f.focus({ preventScroll: true }); }
+}
+function armStat(id, n) {
+  if (n >= 5) return null;
+  const a = armFx(id, n), b = armFx(id, n + 1);
+  if (id === 'sword') return [pct(a.dmg), pct(b.dmg)];
+  if (id === 'armor') return [String(a.hp), String(b.hp)];
+  if (id === 'horse') return [pct(a.speed), pct(b.speed)];
+  return null;
+}
+function buyArm(id, el) {
+  const P = META.P, a = ARMS.find(x => x.id === id), n = P.up[id];
+  if (n >= 5) return;
+  if (P.gold < a.cost[n]) { AU.deny(); const p = el.querySelector('.price'); p.classList.remove('nope'); void p.offsetWidth; p.classList.add('nope'); vib(20); return; }
+  P.gold -= a.cost[n]; P.up[id] = n + 1; AU.buy(); vib(15); profSave(true);
+  renderArms(id); $('aGold').textContent = fmtN(P.gold);
+  const b = $('aArms').querySelector(`[data-id="${id}"]`); if (b) b.classList.add('bought');
+  checkMedals();
+}
+function drawChip(cv, kind, it) {
+  const g = cv.getContext('2d'), S = cv.width, r = S / 2; g.clearRect(0, 0, S, S);
+  g.save(); g.beginPath(); g.arc(r, r, r - 1, 0, TAU); g.clip();
+  if (kind === 'coat') {
+    const gr = g.createRadialGradient(r * 0.72, r * 0.62, 2, r, r, r * 1.1); gr.addColorStop(0, it.sw[0]); gr.addColorStop(1, it.sw[1]); g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    if (it.dap > 1 || it.id === 'white') { g.fillStyle = 'rgba(255,255,255,.22)'; for (let i = 0; i < 9; i++) { g.beginPath(); g.arc(S * (0.2 + 0.3 * ((i * 37) % 10) / 10 + 0.1 * (i % 3)), S * (0.45 + 0.12 * (i % 4)), S * 0.06, 0, TAU); g.fill(); } }
+    g.fillStyle = it.mane; g.beginPath(); g.ellipse(S * 0.78, S * 0.08, S * 0.5, S * 0.2, -0.55, 0, TAU); g.fill();
+  } else { g.fillStyle = it.sw; g.fillRect(0, 0, S, S); drawEagle(g, r, r * 1.06, S * 0.66, it.swE); }
+  g.restore();
+}
+function renderLooks() {
+  const P = META.P, box = $('aLooks'); box.textContent = '';
+  const hint = document.createElement('p'); hint.className = 'lkh'; hint.textContent = t('lkHint'); box.appendChild(hint);
+  for (const [kind, list, head] of [['coat', COATS, 'lkHorse'], ['ban', BANS, 'lkBan']]) {
+    const h = document.createElement('div'); h.className = 'h3'; h.textContent = t(head); box.appendChild(h);
+    const grid = document.createElement('div'); grid.className = 'swatches'; box.appendChild(grid);
+    for (const it of list) {
+      const s = lookState(kind, it), b = document.createElement('button'), name = (kind === 'coat' ? SQ.coat : SQ.ban)[it.id];
+      b.className = 'sw s-' + s + (s === 'lvl' || s === 'medal' ? ' lock' : ''); b.dataset.kind = kind; b.dataset.id = it.id;
+      b.innerHTML = '<canvas width="96" height="96" aria-hidden="true"></canvas><span class="sn"></span><span class="sp"></span>';
+      drawChip(b.firstChild, kind, it); b.querySelector('.sn').textContent = name;
+      const sp = b.querySelector('.sp');
+      if (s === 'on') sp.textContent = t('lkOn'); else if (s === 'own') sp.textContent = t('lkOwn');
+      else if (s === 'lvl') sp.textContent = t('lkLv', it.lvl); else if (s === 'medal') sp.textContent = t('lkMedal', SQ.med[it.medal][0]);
+      else { sp.innerHTML = '<i class="duk"></i><b></b>'; sp.querySelector('b').textContent = fmtN(it.cost); }
+      b.setAttribute('aria-label', name + '. ' + sp.textContent); b.setAttribute('aria-pressed', String(s === 'on'));
+      const prev = () => applyLook(PL.rig, kind === 'coat' ? it.id : P.eq.coat, kind === 'ban' ? it.id : P.eq.ban);
+      b.addEventListener('focus', prev); b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') prev(); });
+      b.addEventListener('click', () => pickLook(kind, it, b));
+      grid.appendChild(b);
+    }
+  }
+  box.onfocusout = e => { if (!e.relatedTarget || !box.contains(e.relatedTarget)) heroLook(); };
+  box.onpointerleave = e => { if (e.pointerType === 'mouse' && !box.contains(document.activeElement)) heroLook(); };
+}
+function pickLook(kind, it, el) {
+  const P = META.P, s = lookState(kind, it);
+  if (s === 'on') { AU.tick(); return; }
+  if (s === 'cost' || s === 'lvl' || s === 'medal') { AU.deny(); el.classList.remove('nope'); void el.offsetWidth; el.classList.add('nope'); vib(20); return; }
+  if (s === 'buy') { P.gold -= it.cost; AU.buy(); } else AU.pick();
+  if (!P.own[kind].includes(it.id)) P.own[kind].push(it.id);
+  P.eq[kind] = it.id; profSave(true); heroLook(); vib(12);
+  $('aGold').textContent = fmtN(P.gold); renderLooks();
+  const f = $('aLooks').querySelector(`[data-kind="${kind}"][data-id="${it.id}"]`); if (f && !touchMode) f.focus({ preventScroll: true });
+}
+function renderMedals() {
+  const P = META.P, box = $('aMedals'); box.textContent = '';
+  const n = medalsEarned(); P.seenMed = n; profSave();
+  $('aTabs').querySelector('[data-tab="medals"]').classList.remove('new');
+  const h = document.createElement('p'); h.className = 'lkh'; h.textContent = t('medN', n, MEDALS.length); box.appendChild(h);
+  const ul = document.createElement('ul'); ul.className = 'meds'; box.appendChild(ul);
+  const list = MEDALS.filter(m => P.medals[m.id]).concat(MEDALS.filter(m => !P.medals[m.id]));
+  for (const m of list) {
+    const on = !!P.medals[m.id], li = document.createElement('li'); li.className = on ? '' : 'off';
+    li.innerHTML = `<span class="ms">${svgI(m.ic)}</span><span><b></b><span></span></span><span class="mg num"></span>`;
+    li.querySelector('b').textContent = SQ.med[m.id][0]; li.querySelector('span span').textContent = SQ.med[m.id][1];
+    li.querySelector('.mg').textContent = on ? '+' + fmtN(m.g) : m.n && m.goal > 1 ? fmtN(Math.min(m.goal, m.n(P))) + '/' + fmtN(m.goal) : '+' + fmtN(m.g);
+    ul.appendChild(li);
+  }
+}
+
+/* ---- the daily challenge screen ---- */
+const WD = ['e diel', 'e hënë', 'e martë', 'e mërkurë', 'e enjte', 'e premte', 'e shtunë'], MO = ['janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor', 'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor'];
+function openDaily() {
+  if (!ready) return; AU.init(); syncDay();
+  const plan = dayPlan(); UI.shot = SHOTS.endless; if (ATM.tod !== plan.tod) setTimeOfDay(plan.tod);
+  renderDaily(); showScreen('daily', '#dGo');
+}
+function renderDaily() {
+  const P = META.P, plan = dayPlan(), d = new Date(), wd = WD[d.getDay()];
+  $('dWhen').textContent = wd.charAt(0).toUpperCase() + wd.slice(1) + ', ' + d.getDate() + ' ' + MO[d.getMonth()];
+  $('dText').textContent = SQ.dTod[plan.tod] + '. ' + (P.day.done ? t('dDoneT', untilTomorrow()) : t('dGoal'));
+  const ml = $('dMods'); ml.textContent = '';
+  for (const k of plan.mods) {
+    const [ic, cat] = DMOD_LOOK[k], cc = CATC[cat], li = document.createElement('li');
+    li.innerHTML = `<span class="seal" style="--c1:${cc[0]};--c2:${cc[1]}">${svgI(ic)}</span><span><b></b><span></span></span>`;
+    li.querySelector('b').textContent = SQ.dm[k][0]; li.querySelector('span span').textContent = SQ.dm[k][1]; ml.appendChild(li);
+  }
+  const dl = $('dInfo'); dl.textContent = '';
+  const add = (v, k, coin) => { const d = document.createElement('div'), b = document.createElement('b'), sp = document.createElement('span'); d.className = 'st'; b.textContent = v; if (coin) b.insertAdjacentHTML('afterbegin', '<i class="duk"></i>'); sp.textContent = k; d.append(b, sp); dl.appendChild(d); };
+  const sn = streakNext(), sc = streakNow();
+  if (P.day.done) add('\u2713', t('dRewardDone')); else add('+' + dailyGold(sn), t('dReward') + ', +250 ' + t('xp'), true);
+  add(P.day.best ? String(P.day.best) : '0', t('dBestW'));
+  add(String(sc), t('dStreakW'));
+  const ol = $('dOrders'); ol.textContent = '';
+  for (const o of plan.orders) {
+    const have = Math.min(o.n, P.day.prog[o.s] || 0), done = P.day.got.includes(o.id), li = document.createElement('li');
+    li.className = done ? 'done' : '';
+    li.innerHTML = `<span></span><span class="op num"></span><i class="xbar"><i></i></i>`;
+    li.firstChild.textContent = ordText(o); li.querySelector('.op').textContent = done ? '+' + o.g + ' ✓' : fmtN(have) + '/' + fmtN(o.n) + ', +' + o.g;
+    li.querySelector('.xbar i').style.transform = `scaleX(${(have / o.n).toFixed(3)})`;
+    ol.appendChild(li);
+  }
+  $('dBonus').textContent = P.day.all ? t('ordAll') + '. ' + t('ordNew') : t('ordBonus', ORD_BONUS);
+}
+
+/* ---- the end of a battle: what it earned ---- */
+function renderRewards(R) {
+  const box = $('endRew'); META.shown = R;
+  if (!R) { box.hidden = true; return; }
+  box.hidden = false;
+  const P = META.P, dg = P.gold - R.gold0, dx = P.xp - R.xp0;
+  $('rGold').textContent = '+0'; $('rXp').textContent = '+0';
+  const lv = R.lv0; $('rLvl').textContent = lv.L; $('rTitle').textContent = titleOf(lv.L);
+  $('rXpT').textContent = lv.max ? '' : fmtN(lv.into) + ' / ' + fmtN(lv.need);
+  const bar = $('rBar'); bar.style.transition = 'none'; bar.style.transform = `scaleX(${lv.max ? 1 : (lv.into / lv.need).toFixed(3)})`;
+  const ul = $('rList'); ul.textContent = ''; let k = 0;
+  const chip = (ic, text, g) => { const li = document.createElement('li'); li.style.setProperty('--d', (1.3 + k++ * 0.18).toFixed(2) + 's'); li.innerHTML = `<span class="ms">${svgI(ic)}</span><span></span>` + (g ? `<b class="num">+${fmtN(g)}</b>` : ''); li.children[1].textContent = text; ul.appendChild(li); };
+  if (R.levels.length) { const L = R.levels[R.levels.length - 1]; chip('crown', t('shLevel', titleOf(L), L), R.levels.reduce((a, l) => a + 10 + 5 * l, 0)); }
+  if (R.daily) chip('sun', t('dDone'), R.daily);
+  for (const id of R.medals) chip(MEDAL_BY[id].ic, SQ.med[id][0], MEDAL_BY[id].g);
+  for (const o of R.orders) chip(o.id === 'all' ? 'crown' : 'flag2', o.id === 'all' ? t('tOrders') : ordText(o), o.g);
+  ul.hidden = !ul.children.length;
+  const nx = $('rNext'), goal = nextGoal(); nx.textContent = '';
+  if (goal) {
+    const s = document.createElement('span'); s.textContent = goal.can ? t('rNextBuy', goal.name) : t('rNextNeed', fmtN(goal.cost - P.gold), goal.name);
+    if (!goal.can) { const b = document.createElement('i'); b.className = 'xbar'; b.innerHTML = '<i></i>'; b.firstChild.style.transform = `scaleX(${(P.gold / goal.cost).toFixed(3)})`; nx.appendChild(b); }
+    nx.appendChild(s);
+  }
+  nx.hidden = !goal;
+  R.dg = dg; R.dx = dx;
+}
+/* what to aim for next: an upgrade the purse already covers, else a colour it covers, else the nearest thing out of reach */
+function nextGoal() {
+  const P = META.P; let arm = null, look = null, near = null;
+  const see = (name, cost, isArm) => {
+    if (cost <= P.gold) { if (isArm) { if (!arm || cost < arm.cost) arm = { name, cost, can: true }; } else if (!look || cost > look.cost) look = { name, cost, can: true }; }
+    else if (!near || cost < near.cost) near = { name, cost, can: false };
+  };
+  for (const a of ARMS) { const n = P.up[a.id]; if (n < 5) see(SQ.armName(a.id, n + 1), a.cost[n], true); }
+  for (const c of COATS) if (c.cost && !P.own.coat.includes(c.id)) see(SQ.coatN[c.id], c.cost);
+  for (const b of BANS) if (b.cost && !P.own.ban.includes(b.id)) see(SQ.banN[b.id], b.cost);
+  return arm || look || near;
+}
+function countUp(el, to, ms, fmt) {
+  if (reduceMotion || !to) { el.textContent = fmt(to); return; }
+  const t0 = performance.now(), id = setInterval(() => {
+    const k = Math.min(1, (performance.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(to * e);
+    if (k >= 1) clearInterval(id);
+  }, 33);
+}
+function playRewards() {
+  const R = META.shown; if (!R || $('endRew').hidden) return;
+  const P = META.P, lv1 = lvOf(P.xp), bar = $('rBar'), gid = G.gid;
+  setTimeout(() => {
+    if (G.gid !== gid || G.state !== 'over') return;
+    countUp($('rGold'), R.dg, 1100, v => '+' + fmtN(v)); countUp($('rXp'), R.dx, 1100, v => '+' + fmtN(v));
+    if (R.dg > 0) { let n = 0; const id = setInterval(() => { AU.coin(); if (++n >= 8) clearInterval(id); }, 120); }
+    // the bar fills level by level
+    let L = R.lv0.L;
+    const step = () => {
+      if (G.gid !== gid || G.state !== 'over') return;
+      const last = L >= lv1.L, k = last ? (lv1.max ? 1 : lv1.into / lv1.need) : 1, dur = reduceMotion ? 0 : last ? 0.9 : 0.6;
+      bar.style.transition = `transform ${dur}s cubic-bezier(.3,.7,.3,1)`; bar.style.transform = `scaleX(${k.toFixed(3)})`;
+      if (last) { $('rXpT').textContent = lv1.max ? '' : fmtN(lv1.into) + ' / ' + fmtN(lv1.need); return; }
+      setTimeout(() => {
+        L++; $('rLvl').textContent = L; $('rTitle').textContent = titleOf(L);
+        const b = $('rLvlB'); b.classList.remove('lvup'); void b.offsetWidth; b.classList.add('lvup'); AU.level();
+        bar.style.transition = 'none'; bar.style.transform = 'scaleX(0)'; void bar.offsetWidth; step();
+      }, dur * 1000 + 120);
+    };
+    step();
+  }, reduceMotion ? 0 : 450);
+}
+
+/* ---- share the result: a picture of the battlefield with the outcome, for stories and chats ---- */
+async function shareResult() {
+  const btn = $('endShare'); if (btn.dataset.busy) return; btn.dataset.busy = '1';
+  try {
+    const W2 = 1080, H2 = 1350, c = document.createElement('canvas'); c.width = W2; c.height = H2; const g = c.getContext('2d');
+    try { updateWorld(scene, null); setCamera(); render(); const s = canvas, k = Math.max(W2 / s.width, H2 / s.height); g.drawImage(s, (W2 - s.width * k) / 2, (H2 - s.height * k) / 2, s.width * k, s.height * k); }
+    catch (e) { g.fillStyle = '#2a0907'; g.fillRect(0, 0, W2, H2); }
+    let gr = g.createLinearGradient(0, 0, 0, H2 * 0.36); gr.addColorStop(0, 'rgba(7,4,3,.82)'); gr.addColorStop(1, 'rgba(7,4,3,0)'); g.fillStyle = gr; g.fillRect(0, 0, W2, H2 * 0.36);
+    gr = g.createLinearGradient(0, H2 * 0.42, 0, H2); gr.addColorStop(0, 'rgba(7,4,3,0)'); gr.addColorStop(0.35, 'rgba(7,4,3,.78)'); gr.addColorStop(1, 'rgba(7,4,3,.94)'); g.fillStyle = gr; g.fillRect(0, H2 * 0.42, W2, H2 * 0.58);
+    const D = '"Cormorant Garamond", Georgia, serif', U = '"Alegreya Sans", "Segoe UI", sans-serif', gilt = (y0, y1) => { const q = g.createLinearGradient(0, y0, 0, y1); q.addColorStop(0, '#fff5d6'); q.addColorStop(0.35, '#f2d185'); q.addColorStop(0.6, '#c9963e'); q.addColorStop(0.78, '#8b5e21'); q.addColorStop(1, '#e6c068'); return q; };
+    g.textAlign = 'center'; g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 24;
+    const ec = document.createElement('canvas'); ec.width = ec.height = 150; drawEagleOn(ec, null, true); g.drawImage(ec, W2 / 2 - 60, 48, 120, 120);
+    g.font = `700 112px ${D}`; g.fillStyle = gilt(180, 290); g.fillText('SKËNDERBEU', W2 / 2, 280);
+    const m = MS.cur, R = META.shown, P = META.P;
+    const verdict = $('endVerdict').textContent, title = $('endTitle').textContent;
+    g.font = `italic 600 50px ${D}`; g.fillStyle = '#ffe2a0'; g.fillText(verdict, W2 / 2, H2 - 470);
+    g.font = `700 84px ${D}`; g.fillStyle = '#fff8ea'; g.fillText(title, W2 / 2, H2 - 385, W2 - 120);
+    if (m && !m.endless && META.endStars) for (let i = 0; i < 3; i++) starAt(g, W2 / 2 + (i - 1) * 74, H2 - 318, 28, i < META.endStars);
+    g.shadowBlur = 12; g.font = `700 64px ${D}`; g.fillStyle = '#fff8ea';
+    const stats = [[fmtN(G.kills), t('shKills')], [fmtN(G.score), t('shScore')]];
+    stats.forEach(([v, l], i) => { const x = W2 / 2 + (i - 0.5) * 300; g.font = `700 64px ${D}`; g.fillStyle = '#fff8ea'; g.fillText(v, x, H2 - 215); g.font = `500 30px ${U}`; g.fillStyle = 'rgba(244,239,229,.8)'; g.fillText(l, x, H2 - 175); });
+    if (P) { const lv = lvOf(P.xp).L; g.font = `600 34px ${U}`; g.fillStyle = '#ffe2a0'; g.fillText(t('shLevel', titleOf(lv), lv), W2 / 2, H2 - 118); }
+    g.shadowBlur = 0; const pw = 560, px = (W2 - pw) / 2, py = H2 - 92; const pg = g.createLinearGradient(0, py, 0, py + 64); pg.addColorStop(0, '#fbe2a0'); pg.addColorStop(0.55, '#e7b956'); pg.addColorStop(1, '#c8902f');
+    g.fillStyle = pg; roundRect(g, px, py, pw, 64, 12); g.fill(); g.font = `800 38px ${U}`; g.fillStyle = '#3a0b07'; g.fillText(t('shPlay') + ': skenderbeu.fun', W2 / 2, py + 45);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png')); if (!blob) throw new Error('no image');
+    const file = new File([blob], 'skenderbeu.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: t('shareText') }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'skenderbeu.png'; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    btn.querySelector('span').textContent = t('shareSaved'); setTimeout(() => { btn.querySelector('span').textContent = t('share'); }, 2600);
+  } catch (e) { console.warn(e); }
+  finally { delete btn.dataset.busy; }
+}
+function starAt(g, x, y, r, on) {
+  g.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - PI / 2, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.closePath();
+  if (on) { g.fillStyle = '#e0b04f'; g.fill(); } else { g.strokeStyle = 'rgba(244,239,229,.5)'; g.lineWidth = 3; g.stroke(); }
+}
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+/* ---- wiring ---- */
+META.P = profLoad();
+syncDay();
+$('mDaily').addEventListener('click', openDaily);
+$('mArmory').addEventListener('click', () => openArmory('arms'));
+$('prof').addEventListener('click', () => { AU.pick(); openArmory('arms'); });
+$('dGo').addEventListener('click', () => startGame(DAILY));
+$('dBack').addEventListener('click', toTitleMenu);
+$('aBack').addEventListener('click', closeArmory);
+for (const b of $('aTabs').children) b.addEventListener('click', () => armTab(b.dataset.tab));
+$('aTabs').addEventListener('keydown', e => {
+  if (e.code !== 'ArrowLeft' && e.code !== 'ArrowRight') return; e.preventDefault();
+  const tabs = ['arms', 'looks', 'medals'], i = tabs.indexOf(UI.armTab); armTab(tabs[(i + (e.code === 'ArrowRight' ? 1 : 2)) % 3], true);
+});
+$('endShare').addEventListener('click', () => { AU.pick(); shareResult(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && META.P) profSave(true); });
+window.addEventListener('pagehide', () => { if (META.P) profSave(true); });
+Object.assign(window.__skb, { META, DAILY, dayPlan, profNew, checkMedals, giveMedal, openArmory, openDaily, heroLook, applyLook, lvOf, earn });
+
+if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
 </script>
